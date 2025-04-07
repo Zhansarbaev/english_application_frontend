@@ -197,10 +197,10 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
 
   Future<void> _goToNextScreen(BuildContext context) async {
     if (_selectedLevel != null) {
-      // ✅ Сохраняем уровень локально (в Supabase добавится после регистрации)
+      // Сохраняем уровень локально (в Supabase добавится после регистрации)
       await UserLevelService.saveLevelLocally(_selectedLevel!);
 
-      // ✅ Переход на регистрацию с переданным уровнем
+      // Переход на регистрацию с переданным уровнем
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => RegistrationPage(selectedLevel: _selectedLevel!)),
@@ -240,7 +240,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                 children: [
                   ElevatedButton(
                     onPressed: () {
-                      // ✅ Переход на тест для определения уровня
+                      // Переход на тест для определения уровня
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (context) => QuizPage()),

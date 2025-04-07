@@ -323,7 +323,7 @@ class _ReadingPageState extends State<ReadingPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "📌 $selectedTopic",
+                              "$selectedTopic",
                               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                             ),
                             SizedBox(height: 8),
@@ -344,7 +344,7 @@ class _ReadingPageState extends State<ReadingPage> {
                   label: Text(
                     "Оқылды деп белгілеу",
                     style: TextStyle(
-                      color: isReadMarked ? Colors.black : Colors.white, // 🔄 Меняется цвет текста
+                      color: isReadMarked ? Colors.black : Colors.white, //  Меняется цвет текста
                     ),
                   ),
                   style: ElevatedButton.styleFrom(

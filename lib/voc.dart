@@ -56,7 +56,7 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
         fetchWords();  // После получения уровня, загружаем слова
       }
     } catch (e) {
-      debugPrint("🚨 Ошибка в fetchUserLevel(): $e");
+      debugPrint("Ошибка в fetchUserLevel(): $e");
     }
   }
 
@@ -84,7 +84,7 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
         checkIfFavorite();
       }
     } catch (e) {
-      debugPrint("🚨 Ошибка в fetchWords(): $e");
+      debugPrint("Ошибка в fetchWords(): $e");
     }
   }
 
@@ -165,7 +165,7 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
         Navigator.pop(context, true);
       }
     } catch (e) {
-      debugPrint("🚨 Ошибка в markLearned(): $e");
+      debugPrint("Ошибка в markLearned(): $e");
     }
   }
 

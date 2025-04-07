@@ -24,7 +24,7 @@ class _HomePageContentState extends State<HomePageContent> {
   @override
   void initState() {
     super.initState();
-    debugPrint("✅ HomePageContent инициализирован. userId = ${widget.userId}, token = ${widget.token}");
+    debugPrint("HomePageContent инициализирован. userId = ${widget.userId}, token = ${widget.token}");
     fetchUserData(); // Загружаем текущий уровень пользователя и unlockedLevel
   }
 
@@ -42,12 +42,12 @@ class _HomePageContentState extends State<HomePageContent> {
           unlockedLevel = response['unlocked_level'] ?? 1;
           userLevel = response['level'] ?? 'A1';
         });
-        debugPrint("📊 Данные пользователя обновлены: unlockedLevel = $unlockedLevel, level = $userLevel");
+        debugPrint("Данные пользователя обновлены: unlockedLevel = $unlockedLevel, level = $userLevel");
       } else {
-        debugPrint("🚨 Ошибка: данные пользователя не найдены!");
+        debugPrint(" Ошибка: данные пользователя не найдены!");
       }
     } catch (e) {
-      debugPrint("❌ Ошибка при получении данных пользователя: $e");
+      debugPrint("Ошибка при получении данных пользователя: $e");
     }
   }
 
@@ -56,7 +56,7 @@ class _HomePageContentState extends State<HomePageContent> {
     setState(() {
       unlockedLevel++; // Увеличиваем уровень на 1
     });
-    debugPrint("🔓 Открыта следующая карточка: $unlockedLevel");
+    debugPrint("Открыта следующая карточка: $unlockedLevel");
   }
 
   /// Разворачивает карточку
@@ -64,22 +64,22 @@ class _HomePageContentState extends State<HomePageContent> {
     setState(() {
       expandedIndex = expandedIndex == index ? -1 : index;
     });
-    debugPrint("🔄 Карточка $index развернута: ${expandedIndex == index}");
+    debugPrint("Карточка $index развернута: ${expandedIndex == index}");
   }
 
   /// Переход на страницу избранного
   void navigateToFavorites() {
-    debugPrint("📌 Переход в избранное, userId = ${widget.userId}");
+    debugPrint("Переход в избранное, userId = ${widget.userId}");
 
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => FavoritesPage(userId: widget.userId)), // ✅ Передаем userId
+      MaterialPageRoute(builder: (context) => FavoritesPage(userId: widget.userId)), //  Передаем userId
     );
   }
 
   /// Переход на страницу (VocPage, ListeningPage, ReadingPage)
   void navigateToPage(int index) {
-    debugPrint("🔍 Навигация к странице: $index, userId = ${widget.userId}");
+    debugPrint("Навигация к странице: $index, userId = ${widget.userId}");
 
     Widget page;
     switch (index) {
@@ -93,7 +93,7 @@ class _HomePageContentState extends State<HomePageContent> {
         page = ReadingPage(userId: widget.userId);
         break;
       default:
-        debugPrint("⚠ Ошибка: неверный индекс $index");
+        debugPrint("Ошибка: неверный индекс $index");
         return;
     }
 
@@ -102,7 +102,7 @@ class _HomePageContentState extends State<HomePageContent> {
       context,
       MaterialPageRoute(builder: (context) => page),
     ).then((_) {
-      debugPrint("🔄 Пользователь вернулся, обновляем данные...");
+      debugPrint("Пользователь вернулся, обновляем данные...");
       fetchUserData();
     });
   }

@@ -4,7 +4,7 @@ import 'auth.dart'; // Импортируем страницу авториза�
 import 'user_level_service.dart'; // Для сохранения уровня в Supabase
 
 class RegistrationPage extends StatefulWidget {
-  final String selectedLevel; // ✅ Принимаем уровень из LevelSelectionPage
+  final String selectedLevel; //  Принимаем уровень из LevelSelectionPage
 
   RegistrationPage({required this.selectedLevel});
 
@@ -52,7 +52,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
       if (response.user != null) {
         final userId = response.user!.id;
 
-        // ✅ Сохраняем уровень в Supabase после успешной регистрации
+        // Сохраняем уровень в Supabase после успешной регистрации
         await UserLevelService.saveLevelToSupabase(userId, widget.selectedLevel);
 
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

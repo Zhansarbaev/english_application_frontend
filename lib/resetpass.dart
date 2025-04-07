@@ -30,7 +30,7 @@ class _ResetPassPageState extends State<ResetPassPage> {
   Future<void> _sendResetEmail() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      _showMessage('⚠️ Email енгізіңіз!', isError: true);
+      _showMessage('Email енгізіңіз!', isError: true);
       return;
     }
 
@@ -50,12 +50,12 @@ class _ResetPassPageState extends State<ResetPassPage> {
         setState(() {
           _emailSent = true;
         });
-        _showMessage('✅ Сілтеме жіберілді! Email-ді тексеріңіз.', isError: false);
+        _showMessage('Сілтеме жіберілді! Email-ді тексеріңіз.', isError: false);
       } else {
-        _showMessage('⚠️ Қате: ${response.body}', isError: true);
+        _showMessage('Қате: ${response.body}', isError: true);
       }
     } catch (e) {
-      _showMessage('⚠️ Қате: ${e.toString()}', isError: true);
+      _showMessage('Қате: ${e.toString()}', isError: true);
     } finally {
       setState(() {
         _isLoading = false;
@@ -105,7 +105,7 @@ class _ResetPassPageState extends State<ResetPassPage> {
                 ),
                 SizedBox(height: 80),
 
-                // 🔹 Поле для ввода Email
+                //  Поле для ввода Email
                 TextField(
                   controller: _emailController,
                   decoration: InputDecoration(
@@ -118,7 +118,7 @@ class _ResetPassPageState extends State<ResetPassPage> {
                 ),
                 SizedBox(height: 80), // Оставляем место перед кнопкой
 
-                // 🔹 Кнопка отправки Email
+                //  Кнопка отправки Email
                 ElevatedButton(
                   onPressed: _isLoading ? null : _sendResetEmail,
                   style: ElevatedButton.styleFrom(

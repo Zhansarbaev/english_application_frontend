@@ -29,10 +29,10 @@ class _AnswerCheckPageState extends State<AnswerCheckPage> {
   // Количество заполненных полей
   int get answeredCount => _controllers.where((c) => c.text.isNotEmpty).length;
 
-  /// 🔹 **Функция для проверки ответов**
+  ///  Функция для проверки ответов
   Future<void> _checkAnswers() async {
     if (_controllers.any((controller) => controller.text.isEmpty)) {
-      _showSnackBar("❗ Введите ответы для всех 3 подкастов", isSuccess: false);
+      _showSnackBar("Введите ответы для всех 3 подкастов", isSuccess: false);
       return;
     }
 
@@ -65,13 +65,13 @@ class _AnswerCheckPageState extends State<AnswerCheckPage> {
           feedbackMessage = allFeedback;
         });
 
-        // 🔥 После успешной проверки вызываем разблокировку карточки
+        //  После успешной проверки вызываем разблокировку карточки
         _unlockNextCard();
       } else {
-        _showSnackBar("🚨 Ошибка сервера. Попробуйте позже.", isSuccess: false);
+        _showSnackBar("Ошибка сервера. Попробуйте позже.", isSuccess: false);
       }
     } catch (e) {
-      _showSnackBar("🚨 Ошибка соединения. Проверьте интернет.", isSuccess: false);
+      _showSnackBar("Ошибка соединения. Проверьте интернет.", isSuccess: false);
     } finally {
       setState(() {
         isChecking = false;
@@ -79,7 +79,7 @@ class _AnswerCheckPageState extends State<AnswerCheckPage> {
     }
   }
 
-  /// 🔹 **Функция для разблокировки новой карточки**
+  /// **Функция для разблокировки новой карточки**
   Future<void> _unlockNextCard() async {
     setState(() {
       isUnlocking = true;
@@ -99,7 +99,7 @@ class _AnswerCheckPageState extends State<AnswerCheckPage> {
 
       _showSnackBar(decodedResponse["message"], isSuccess: true);
     } catch (e) {
-      _showSnackBar("🚨 Ошибка соединения. Проверьте интернет.", isSuccess: false);
+      _showSnackBar("Ошибка соединения. Проверьте интернет.", isSuccess: false);
     } finally {
       setState(() {
         isUnlocking = false;
@@ -107,7 +107,7 @@ class _AnswerCheckPageState extends State<AnswerCheckPage> {
     }
   }
 
-  /// 🔹 **Функция для показа `SnackBar`**
+  /// **Функция для показа `SnackBar`**
   void _showSnackBar(String message, {bool isSuccess = true}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

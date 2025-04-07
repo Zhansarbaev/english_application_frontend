@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'registration.dart';
 import 'resetpass.dart';
 import 'home_page.dart';
-import 'user_level_service.dart'; // ✅ Импортируем сервис для работы с уровнем
+import 'user_level_service.dart'; // Импортируем сервис для работы с уровнем
 import 'user_data.dart';  // Импортируем файл с глобальной переменной для userId
 
 class AuthPage extends StatefulWidget {
@@ -67,7 +67,7 @@ class _AuthPageState extends State<AuthPage> {
   }
 
 
-  // ✅ Функция для перехода на страницу регистрации с передачей уровня
+  // Функция для перехода на страницу регистрации с передачей уровня
   Future<void> _goToRegistration() async {
     String? savedLevel = await UserLevelService.getLevelLocally(); // Получаем сохранённый уровень
     Navigator.push(
@@ -202,7 +202,7 @@ class _AuthPageState extends State<AuthPage> {
                       SizedBox(
                         width: 350,
                         child: TextButton(
-                          onPressed: _goToRegistration, // ✅ Вызываем функцию с уровнем
+                          onPressed: _goToRegistration, // Вызываем функцию с уровнем
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.symmetric(vertical: 15),
                             foregroundColor: Colors.black,

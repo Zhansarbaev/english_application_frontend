@@ -35,12 +35,12 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           userId = user.id;
         });
-        debugPrint("✅ Получен userId: $userId");
+        debugPrint("Получен userId: $userId");
       } else {
-        debugPrint("🚨 Ошибка: пользователь не авторизован!");
+        debugPrint("Ошибка: пользователь не авторизован!");
       }
     } catch (e) {
-      debugPrint("❌ Ошибка при получении userId: $e");
+      debugPrint("Ошибка при получении userId: $e");
     }
   }
 
@@ -48,13 +48,13 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     // Показываем индикатор загрузки, пока userId не загружен
     if (userId.isEmpty) {
-      debugPrint("⏳ Ожидаем загрузки userId...");
+      debugPrint("Ожидаем загрузки userId...");
       return Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    debugPrint("🏠 Загружается HomePage с userId = $userId, token = ${widget.token}");
+    debugPrint("Загружается HomePage с userId = $userId, token = ${widget.token}");
 
     // Страницы для Bottom Navigation
     final List<Widget> _pages = [
@@ -70,7 +70,7 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) {
-          debugPrint("🔄 Переключение на страницу: $_selectedIndex → $index");
+          debugPrint("Переключение на страницу: $_selectedIndex → $index");
           setState(() => _selectedIndex = index);
         },
         items: [

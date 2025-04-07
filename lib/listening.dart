@@ -181,13 +181,13 @@ class _ListeningPageState extends State<ListeningPage> {
 
     try {
       final response = await http.get(url);
-      print("📩 Статус код: ${response.statusCode}");
-      print("📜 Ответ сервера: ${response.body}");
+      print("Статус код: ${response.statusCode}");
+      print("Ответ сервера: ${response.body}");
 
       if (response.statusCode == 200) {
         try {
           final data = jsonDecode(response.body);
-          print("✅ Успешный парсинг JSON: $data");
+          print("Успешный парсинг JSON: $data");
 
           setState(() {
             podcasts = data.containsKey('podcasts')
@@ -201,11 +201,11 @@ class _ListeningPageState extends State<ListeningPage> {
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString('savedPodcasts', jsonEncode(podcasts));
         } catch (jsonError) {
-          print("🚨 Ошибка парсинга JSON: $jsonError");
+          print("Ошибка парсинга JSON: $jsonError");
         }
       }
     } catch (e) {
-      print("🚨 Ошибка загрузки подкастов: $e");
+      print("Ошибка загрузки подкастов: $e");
     }
   }
   /// Разблокирует следующую карточку, если три последних ответа были верны
@@ -225,7 +225,7 @@ class _ListeningPageState extends State<ListeningPage> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("🚨 Ошибка при открытии карточки!")),
+        SnackBar(content: Text("Ошибка при открытии карточки!")),
       );
     }
   }
@@ -253,7 +253,7 @@ class _ListeningPageState extends State<ListeningPage> {
         await prefs.setString('savedVideos', jsonEncode(videos));
       }
     } catch (e) {
-      print("🚨 Ошибка загрузки видео: $e");
+      print("Ошибка загрузки видео: $e");
     }
   }
 
@@ -263,7 +263,7 @@ class _ListeningPageState extends State<ListeningPage> {
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     } else {
-      print("🚨 Не удалось открыть ссылку: $videoUrl");
+      print("Не удалось открыть ссылку: $videoUrl");
     }
   }
 
@@ -535,7 +535,7 @@ class _ListeningPageState extends State<ListeningPage> {
 
                 SizedBox(height: 20), // Отступ перед кнопкой
 
-// 🔥 Кнопка "Пройти проверку" в самом низу списка
+// Кнопка "Пройти проверку" в самом низу списка
                 ElevatedButton(
                   onPressed: () {
                     if (selectedPodcastTopic == null) {

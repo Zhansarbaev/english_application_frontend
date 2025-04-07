@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'registration.dart'; // ✅ Добавляем импорт
-import 'user_level_service.dart'; // ✅ Добавляем импорт
+import 'registration.dart'; //  Добавляем импорт
+import 'user_level_service.dart'; //  Добавляем импорт
 
 class ResultPage extends StatelessWidget {
   final Map<String, int> scoreByLevel;
@@ -78,10 +78,10 @@ class ResultPage extends StatelessWidget {
               width: 350.0,
               child: ElevatedButton(
                 onPressed: () async {
-                  // ✅ Сохраняем уровень локально
+                  // Сохраняем уровень локально
                   await UserLevelService.saveLevelLocally(level);
 
-                  // ✅ Переход на регистрацию с переданным уровнем
+                  //  Переход на регистрацию с переданным уровнем
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(

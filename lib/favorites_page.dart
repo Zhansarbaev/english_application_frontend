@@ -32,12 +32,12 @@ class _FavoritesPageState extends State<FavoritesPage> {
         setState(() {
           favoriteWords = List<Map<String, dynamic>>.from(response);
         });
-        debugPrint("✅ Загружены избранные слова: $favoriteWords");
+        debugPrint("Загружены избранные слова: $favoriteWords");
       } else {
-        debugPrint("⚠️ У пользователя нет избранных слов.");
+        debugPrint("У пользователя нет избранных слов.");
       }
     } catch (e) {
-      debugPrint("❌ Ошибка при загрузке избранных слов: $e");
+      debugPrint("Ошибка при загрузке избранных слов: $e");
     }
   }
 
@@ -54,9 +54,9 @@ class _FavoritesPageState extends State<FavoritesPage> {
         favoriteWords.removeWhere((item) => item['word'] == word);
       });
 
-      debugPrint("🗑️ Слово удалено из избранного: $word");
+      debugPrint("Слово удалено из избранного: $word");
     } catch (e) {
-      debugPrint("❌ Ошибка при удалении слова: $e");
+      debugPrint("Ошибка при удалении слова: $e");
     }
   }
 
