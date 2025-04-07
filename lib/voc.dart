@@ -50,27 +50,31 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
 
       if (response != null && response['level'] != null) {
         setState(() {
-          userLevel = response['level'];
+          // Убедимся, что level — это строка, например, 'B1'
+          userLevel = response['level'].toString();
         });
-        fetchWords();
+        fetchWords();  // После получения уровня, загружаем слова
       }
     } catch (e) {
       debugPrint("🚨 Ошибка в fetchUserLevel(): $e");
     }
   }
 
+
+
+
   Future<void> fetchWords() async {
     if (userLevel.isEmpty) return;
 
     try {
-      // Добавляем поле transcription
-      final response = await supabase
-          .from('vocabulary_super')
-          .select('word, translation_kz, transcription')
-          .eq('level', userLevel)
-          .eq('is_read', false)
-          .limit(10);
+      // Теперь мы вызываем RPC для получения слов
+      final response = await supabase.rpc('get_unread_words', params: {
+        'uid': widget.userId,  // передаем ID пользователя (UUID)
+        'lvl': userLevel,      // передаем уровень пользователя
+      });
 
+
+      // Проверяем, если ответ не пустой, то обновляем состояние
       if (response != null && response.isNotEmpty) {
         setState(() {
           words = List<Map<String, dynamic>>.from(response);
@@ -83,6 +87,8 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
       debugPrint("🚨 Ошибка в fetchWords(): $e");
     }
   }
+
+
 
   Future<void> checkIfFavorite() async {
     if (words.isEmpty) return;
@@ -133,16 +139,18 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
   // Метод для обработки нажатия кнопки "Выучил"
   Future<void> markLearned() async {
     if (words.isEmpty) return;
-    final word = words[currentIndex]['word'];
+
+    final wordId = words[currentIndex]['id'];  // Получаем id слова (уникальный идентификатор в vocabulary_super)
 
     try {
-      // Обновляем в БД: устанавливаем is_read = true
-      await supabase
-          .from('vocabulary_super')
-          .update({'is_read': true})
-          .eq('word', word);
+      // Новый запрос для обновления прогресса пользователя в таблице user_vocabulary_progress
+      await supabase.from('user_vocabulary_progress').upsert({
+        'user_id': widget.userId,   // ID пользователя
+        'word_id': wordId,           // ID слова
+        'is_read': true,             // Устанавливаем, что слово выучено
+      });
 
-      // Убираем слово из локального списка, чтобы оно не показывалось снова
+      // Убираем слово из локального списка
       setState(() {
         words.removeAt(currentIndex);
         if (currentIndex >= words.length) {
@@ -160,6 +168,7 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
       debugPrint("🚨 Ошибка в markLearned(): $e");
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
