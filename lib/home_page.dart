@@ -76,7 +76,7 @@ class _HomePageState extends State<HomePage> {
         items: [
           BottomNavigationBarItem(icon: Icon(Icons.whatshot), label: "Skills"),
           BottomNavigationBarItem(icon: Icon(Icons.track_changes), label: "Practice"),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Statistics"),
           BottomNavigationBarItem(icon: Icon(Icons.account_box), label: "Account"),
         ],
         type: BottomNavigationBarType.fixed,

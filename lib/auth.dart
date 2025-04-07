@@ -4,6 +4,7 @@ import 'registration.dart';
 import 'resetpass.dart';
 import 'home_page.dart';
 import 'user_level_service.dart'; // ✅ Импортируем сервис для работы с уровнем
+import 'user_data.dart';  // Импортируем файл с глобальной переменной для userId
 
 class AuthPage extends StatefulWidget {
   @override
@@ -40,6 +41,10 @@ class _AuthPageState extends State<AuthPage> {
 
       if (response.user != null) {
         final String token = response.user!.id;
+
+        // Сохраняем user_id в глобальную переменную
+        userId = token;
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => HomePage(token: token)),
@@ -60,6 +65,7 @@ class _AuthPageState extends State<AuthPage> {
       });
     }
   }
+
 
   // ✅ Функция для перехода на страницу регистрации с передачей уровня
   Future<void> _goToRegistration() async {
