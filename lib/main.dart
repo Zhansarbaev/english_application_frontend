@@ -5,36 +5,50 @@ import 'auth.dart';
 import 'registration.dart';
 import 'user_level_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import 'home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
 
-  // Инициализация Supabase
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
-    //url: 'https://xwwpuygfkfbrqvzuhkkj.supabase.co', // Твой Supabase URL
-
-    //anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3d3B1eWdma2ZicnF2enVoa2tqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5MDQxNDAsImV4cCI6MjA1MzQ4MDE0MH0.uUluMbnqGihPwCJWCf-rkaIc9j140Si-qUPDNbnHou8', // Твой API Key
-
   );
 
+  final prefs = await SharedPreferences.getInstance();
+  final bool isRemembered = prefs.getBool('isRemembered') ?? false;
+  final String? token = prefs.getString('userId');
 
-  runApp(MyApp());
+  runApp(MyApp(
+    initialPage: isRemembered && token != null
+        ? HomePage(token: token)
+        : LevelSelectionPage(),
+  ));
 }
 
 
+
+
+
+
+
 class MyApp extends StatelessWidget {
+  final Widget initialPage;
+
+  const MyApp({required this.initialPage});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: IntroSlider(),
+      home: initialPage,
     );
   }
 }
+
+
 
 class IntroSlider extends StatefulWidget {
   @override
@@ -63,12 +77,17 @@ class _IntroSliderState extends State<IntroSlider> {
     },
   ];
 
-  void _goToLevelSelection(BuildContext context) {
+  Future<void> _goToLevelSelection(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasSeenIntro', true);
+
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => LevelSelectionPage()),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -184,9 +203,13 @@ class _IntroSliderState extends State<IntroSlider> {
 
 
 class LevelSelectionPage extends StatefulWidget {
+  final bool redirectToRegistration; // 👈 ПЕРЕНЕСИ ЭТУ СТРОКУ НАВЕРХ
+
+  const LevelSelectionPage({this.redirectToRegistration = false, Key? key}) : super(key: key); // ✅ значение по умолчанию
   @override
   _LevelSelectionPageState createState() => _LevelSelectionPageState();
 }
+
 
 class _LevelSelectionPageState extends State<LevelSelectionPage> {
   String? _selectedLevel;
@@ -200,21 +223,32 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
 
   Future<void> _goToNextScreen(BuildContext context) async {
     if (_selectedLevel != null) {
-      // Сохраняем уровень локально (в Supabase добавится после регистрации)
       await UserLevelService.saveLevelLocally(_selectedLevel!);
 
-      // Переход на регистрацию с переданным уровнем
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) =>
-            RegistrationPage(selectedLevel: _selectedLevel!)),
-      );
+
+      if (widget.redirectToRegistration) {
+        // 👈 если был переход с "Тіркелу", сразу в регистрацию
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RegistrationPage(selectedLevel: _selectedLevel!),
+          ),
+        );
+      } else {
+        // 👈 если обычный запуск — идём на авторизацию
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => AuthPage()),
+        );
+
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Пожалуйста, выберите деңгейіңіз")),
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

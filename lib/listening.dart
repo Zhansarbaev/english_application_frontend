@@ -5,6 +5,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'answer_check_page.dart';
+import 'package:html_unescape/html_unescape.dart';
 
 
 class ListeningPage extends StatefulWidget {
@@ -27,8 +28,23 @@ class _ListeningPageState extends State<ListeningPage> {
   bool isLoadingPodcasts = true;
   bool isLoadingVideos = true;
 
-  final List<String> podcastTopics = ["General", "Vocabulary", "Pronunciation"];
-  final List<String> videoTopics = ["Business", "Grammar", "Listening"];
+  final List<String> podcastTopics = [
+    "Everyday English",    // Повседневный английский
+    "Phrasal Verbs",       // Фразовые глаголы
+    "Idioms",              // Идиомы
+    "Pronunciation",       // Произношение
+    "Vocabulary Boost",    // Увеличение словарного запаса
+  ];
+
+  final List<String> videoTopics = [
+    "Grammar Tips",        // Советы по грамматике
+    "Business English",    // Деловой английский
+    "Listening Practice",  // Аудирование
+    "Interview Prep",      // Подготовка к интервью
+    "Daily Conversations", // Повседневные диалоги
+  ];
+
+
 
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool isPlayingPodcast = false;
@@ -45,7 +61,7 @@ class _ListeningPageState extends State<ListeningPage> {
         _fetchPodcasts();
       }
       if (selectedVideoTopic != null) {
-        _fetchVideos();
+        _fetchVideos(); // ← если ты уже удалил это, ВЕРНИ ОБРАТНО!
       }
     });
 
@@ -99,6 +115,12 @@ class _ListeningPageState extends State<ListeningPage> {
 
   Future<void> _loadLastSelectedTopics() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('savedVideos');
+    await prefs.remove('savedPodcasts');
+
+    // Удаляем именно кэш другого пользователя (на всякий случай)
+    await prefs.remove('savedVideos_${widget.userId}');
+    await prefs.remove('savedPodcasts_${widget.userId}');// 👈 Удаляем старый кэш
 
     int now = DateTime
         .now()
@@ -207,7 +229,7 @@ class _ListeningPageState extends State<ListeningPage> {
 
           // Сохраняем загруженные подкасты
           SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setString('savedPodcasts', jsonEncode(podcasts));
+          await prefs.setString('savedPodcasts_${widget.userId}', jsonEncode(podcasts));
         } catch (jsonError) {
           print("Ошибка парсинга JSON: $jsonError");
         }
@@ -243,7 +265,13 @@ class _ListeningPageState extends State<ListeningPage> {
 
 
   Future<void> _fetchVideos() async {
-    if (selectedVideoTopic == null) return;
+    if (selectedVideoTopic == null || selectedVideoTopic!.isEmpty) {
+      print("Тема для видео не задана или пустая. Пропускаем загрузку.");
+      return;
+    }
+    setState(() {
+      isLoadingVideos = true;
+    });
     final url = Uri.parse('https://32ba-188-124-247-168.ngrok-free.app/listening/videos?user_id=${widget.userId}&topic=$selectedVideoTopic');
 
     try {
@@ -254,11 +282,13 @@ class _ListeningPageState extends State<ListeningPage> {
           videos = data.containsKey('videos')
               ? List<Map<String, dynamic>>.from(data['videos']).take(3).toList()
               : [];
+          isLoadingVideos = false; // ← добавь сюда
         });
+
 
         // Сохраняем загруженные видео
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('savedVideos', jsonEncode(videos));
+        await prefs.setString('savedVideos_${widget.userId}', jsonEncode(videos));
       }
     } catch (e) {
       print("Ошибка загрузки видео: $e");
@@ -330,8 +360,6 @@ class _ListeningPageState extends State<ListeningPage> {
     required String topicKey,
     required String timeKey,
   }) {
-    // Проверяем, что selectedValue существует в списке options
-    // Если нет - сбрасываем до null
     String? validValue = selectedValue;
     if (selectedValue != null && !options.contains(selectedValue)) {
       validValue = null;
@@ -339,63 +367,99 @@ class _ListeningPageState extends State<ListeningPage> {
 
     bool isLocked = validValue != null && timeLeft != null && timeLeft > 0;
 
-    return Container(
-      color: Color(0xFF84BEDB),
+    final isPodcast = topicKey == 'lastPodcastTopic';
+
+    final dropdownColor = isPodcast
+        ? Color(0xFF4DB6AC) // 💙 Синий для подкастов
+        : Color(0xFF1E88E5); // 💚 Зелёный для видео
+
+
+
+    final List<Color> dropdownGradientColors =
+        topicKey == 'lastPodcastTopic'
+          ? [Color(0xFF4DB6AC), Color(0xFF00897B)] //
+          : [Color(0xFF1E88E5), Color(0xFF1565C0)]; //
+      return Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: dropdownGradientColors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       margin: EdgeInsets.only(bottom: 16),
-      child: Center(
-        child: DropdownButton<String>(
-          isExpanded: true,
-          underline: SizedBox(),
-          dropdownColor: Color(0xFF84BEDB),
-          value: validValue, // Используем проверенное значение
-          hint: Text(
-            hint,
-            style: TextStyle(color: Colors.black),
-            textAlign: TextAlign.center,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          canvasColor: dropdownColor,
+          cardTheme: CardTheme(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
-          items: options.map((String option) {
-            IconData iconData = isLocked && option != validValue
-                ? Icons.lock_outline
-                : Icons.lock_open;
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            isExpanded: true,
+            value: validValue,
+            dropdownColor: dropdownColor,
+            hint: Text(
+              hint,
+              style: TextStyle(color: Colors.white),
+              textAlign: TextAlign.center,
+            ),
+            items: options.map((String option) {
+              IconData iconData = isLocked && option != validValue
+                  ? Icons.lock_outline
+                  : Icons.lock_open;
 
-            return DropdownMenuItem<String>(
-              value: option, // Это значение должно быть уникальным
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(iconData, color: Colors.black),
-                  SizedBox(width: 10),
-                  Text(option, style: TextStyle(color: Colors.black)),
-                ],
-              ),
-            );
-          }).toList(),
-          onChanged: (String? newValue) async {
-            if (isLocked) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Вы можете сменить тему через $timeLeft дней")),
+              return DropdownMenuItem<String>(
+                value: option,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(iconData, color: Colors.white),
+                      SizedBox(width: 10),
+                      Text(option, style: TextStyle(color: Colors.white)),
+                    ],
+                  ),
+                ),
               );
-              return;
-            }
 
-            setState(() {
-              if (hint.contains("подкаст")) {
-                selectedPodcastTopic = newValue;
-              } else {
-                selectedVideoTopic = newValue;
+            }).toList(),
+            onChanged: (String? newValue) async {
+              if (isLocked) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Сіз тақырыпты $timeLeft күннен кейін ғана айырбастай аласыз ...")),
+                );
+                return;
               }
-            });
 
-            if (newValue != null) {
-              await _saveSelectedTopic(newValue, topicKey, timeKey);
-              fetchFunction();
-            }
-          },
+              setState(() {
+                if (hint.contains("подкаст")) {
+                  selectedPodcastTopic = newValue;
+                } else {
+                  selectedVideoTopic = newValue;
+                }
+              });
+
+              if (newValue != null) {
+                await _saveSelectedTopic(newValue, topicKey, timeKey);
+                fetchFunction();
+              }
+            },
+          ),
         ),
       ),
     );
   }
+
 
   /// Построение списка подкастов с управлением
   List<Widget> _buildPodcastList() {
@@ -418,7 +482,7 @@ class _ListeningPageState extends State<ListeningPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.play_circle_fill, color: Colors.grey),
-                Icon(Icons.replay, color: Colors.grey),
+                //Icon(Icons.replay, color: Colors.grey),
               ],
             ),
           ),
@@ -428,56 +492,102 @@ class _ListeningPageState extends State<ListeningPage> {
 
     // Когда подкасты загружены
     return podcasts.map((podcast) {
-      return Card(
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF80CBC4), Color(0xFF4DB6AC)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 6,
+              offset: Offset(0, 4),
+            ),
+          ],
         ),
-        elevation: 4,
         child: ListTile(
+          contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
           title: Text(
             podcast['title'],
-            style: TextStyle(color: Colors.black),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
           ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: Icon(
-                  isPlayingPodcast && currentAudioUrl == podcast['audio_url']
-                      ? Icons.pause_circle_filled
-                      : Icons.play_circle_fill,
-                  color: Colors.blue,
-                ),
-                onPressed: () => _playPausePodcast(podcast['audio_url']),
-              ),
-              IconButton(
-                icon: Icon(Icons.replay, color: Colors.orange),
-                onPressed: _restartPodcast,
-              ),
-            ],
+          trailing: IconButton(
+            icon: Icon(
+              isPlayingPodcast && currentAudioUrl == podcast['audio_url']
+                  ? Icons.pause_circle_filled
+                  : Icons.play_circle_fill,
+              color: Colors.white,
+              size: 30,
+            ),
+            onPressed: () => _playPausePodcast(podcast['audio_url']),
           ),
         ),
       );
     }).toList();
+
   }
 
 
   /// Построение списка видео, открывающихся через YouTube
   List<Widget> _buildVideoList() {
+    final unescape = HtmlUnescape();
+    if (isLoadingVideos) {
+      // Заглушки, пока видео загружаются
+      return List.generate(3, (index) {
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 4,
+          child: ListTile(
+            title: Container(
+              width: double.infinity,
+              height: 20,
+              color: Colors.grey[300],
+            ),
+            trailing: Icon(Icons.open_in_new, color: Colors.grey),
+          ),
+        );
+      });
+    }
+
+    // Когда видео загружены
     return videos.map((video) {
-      return Card(
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF42A5F5), Color(0xFF1E88E5)], // Светлая голубая растяжка// сиренево-фиолетовый градиент
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 4,
+              offset: Offset(2, 2),
+            ),
+          ],
+        ),
         child: ListTile(
           title: Text(
-            video['title'],
-            style: TextStyle(color: Colors.black),
+            unescape.convert(video['title']),
+            style: TextStyle(color: Colors.white),
           ),
-          trailing: Icon(Icons.open_in_new, color: Colors.red),
+          trailing: Icon(Icons.open_in_new, color: Colors.white),
           onTap: () => _openYouTube(video['video_url']),
         ),
       );
+
     }).toList();
   }
+
 
   /// Фиксированный аудиоплеер, закрепленный внизу экрана
   Widget _buildPlayer() {
@@ -585,10 +695,11 @@ class _ListeningPageState extends State<ListeningPage> {
                           child: Padding(
                             padding: EdgeInsets.only(top: 34.8),
                             child: Text(
-                              'күнделікті жазбаларды тыңдау',
+                              'Күнделікті жазбаларды тыңдау',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.white70,
+                                color: Colors.white,
+                                fontStyle: FontStyle.italic,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -602,31 +713,36 @@ class _ListeningPageState extends State<ListeningPage> {
 
           ),
           SliverToBoxAdapter(
-            child: SizedBox(height: 35), // Adjust this value as needed
+            child: SizedBox(height: 10), // Adjust this value as needed
+          ),
+
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+              child: Text(
+                '"Listening" бөлімінде деңгейіңізге сәйкес жақсы подкасттар мен бейнелер тыңдап, жасанды интеллектке зейініңізді тексертіңіз ✨',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                  height: 1.5,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withOpacity(0.05),
+                      offset: Offset(0, 1),
+                      blurRadius: 1,
+                    )
+                  ],
+                ),
+              ),
+            ),
           ),
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+          SliverToBoxAdapter(
+            child: SizedBox(height: 0), // Adjust this value as needed
+          ),
 
           SliverList(
             delegate: SliverChildListDelegate([
@@ -635,11 +751,11 @@ class _ListeningPageState extends State<ListeningPage> {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    SizedBox(height: 5),
+                    SizedBox(height: 0),
 
                     /// Выбор подкастов
                     _buildDropdown(
-                      hint: "Выберите тему для подкаста",
+                      hint: "Подкаст үшін тақырыпты таңдаңыз",
                       options: podcastTopics,
                       selectedValue: selectedPodcastTopic,
                       timeLeft: timeUntilNextPodcastChange,
@@ -647,14 +763,14 @@ class _ListeningPageState extends State<ListeningPage> {
                       topicKey: 'lastPodcastTopic',
                       timeKey: 'lastPodcastChange',
                     ),
-                    SizedBox(height: 5),
+                    SizedBox(height: 0),
                     ..._buildPodcastList(),
 
                     SizedBox(height: 20),
 
                     /// Выбор видео
                     _buildDropdown(
-                      hint: "Выберите тему для видео",
+                      hint: "Бейне үшін тақырыпты таңдаңыз",
                       options: videoTopics,
                       selectedValue: selectedVideoTopic,
                       timeLeft: timeUntilNextVideoChange,
@@ -664,30 +780,57 @@ class _ListeningPageState extends State<ListeningPage> {
                     ),
                     ..._buildVideoList(),
 
-                    SizedBox(height: 20),
+                    SizedBox(height: 30),
+                    ElevatedButton(
+                      onPressed: _fetchVideos,
+                      child: Text('Обновить видео'),
+                    ),
+
 
                     /// Кнопка "Пройти проверку"
-                    ElevatedButton(
-                      onPressed: () {
-                        if (selectedPodcastTopic == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("❗ Выберите тему перед проверкой ответа")),
-                          );
-                          return;
-                        }
+                    SizedBox(
+                      width: double.infinity, // кнопка растянется на всю ширину
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (selectedPodcastTopic == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Жауап жазбас бұрын тақырыпты таңдаңыз ❗")),
+                            );
+                            return;
+                          }
 
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AnswerCheckPage(
-                              userId: widget.userId,
-                              selectedTopic: selectedPodcastTopic!,
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AnswerCheckPage(
+                                userId: widget.userId,
+                                selectedTopic: selectedPodcastTopic!,
+                              ),
                             ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: Color(0xFF7B61FF),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        );
-                      },
-                      child: Text("Пройти проверку"),
+                          elevation: 5,
+                          shadowColor: Colors.black26,
+                        ),
+                        child: Text(
+                          "Тексеруден өту",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
                     ),
+
+
 
                     SizedBox(height: 10),
                   ],

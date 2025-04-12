@@ -171,6 +171,42 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
     }
   }
 
+  Future<void> checkAndUnlockLevel() async {
+    try {
+      // Считаем количество выученных слов
+      final learnedWords = await supabase
+          .from('user_vocabulary_progress')
+          .select('id')
+          .eq('user_id', widget.userId)
+          .eq('is_read', true);
+
+      final count = learnedWords.length;
+      debugPrint("👀 Пользователь выучил $count слов");
+
+      // Получаем текущий unlocked_level
+      final progress = await supabase
+          .from('users_progress')
+          .select('unlocked_level')
+          .eq('user_id', widget.userId)
+          .single();
+
+      final currentLevel = progress['unlocked_level'];
+
+      if (count >= 10 && currentLevel < 2) {
+        await supabase
+            .from('users_progress')
+            .update({'unlocked_level': 2})
+            .eq('user_id', widget.userId);
+        debugPrint("✅ Уровень разблокирован до 2");
+      } else {
+        debugPrint("🔒 Уровень уже разблокирован или недостаточно слов");
+      }
+    } catch (e) {
+      debugPrint("❌ Ошибка при проверке прогресса: $e");
+    }
+  }
+
+
   // Метод для обработки нажатия кнопки "Выучил"
   Future<void> markLearned() async {
     if (words.isEmpty) return;
@@ -192,6 +228,8 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
           currentIndex = words.isEmpty ? 0 : words.length - 1;
         }
       });
+      await checkAndUnlockLevel();
+
 
       if (words.isNotEmpty) {
         speakWord(words[currentIndex]['word']);

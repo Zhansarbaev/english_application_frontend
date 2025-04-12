@@ -5,6 +5,7 @@ import 'resetpass.dart';
 import 'home_page.dart';
 import 'user_level_service.dart'; // Импортируем сервис для работы с уровнем
 import 'user_data.dart';  // Импортируем файл с глобальной переменной для userId
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthPage extends StatefulWidget {
   @override
@@ -15,6 +16,8 @@ class _AuthPageState extends State<AuthPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _rememberMe = false; // 👈 ДОБАВЬ сюда
+
 
   bool _isLoading = false;
   String _errorMessage = '';
@@ -41,6 +44,14 @@ class _AuthPageState extends State<AuthPage> {
 
       if (response.user != null) {
         final String token = response.user!.id;
+        userId = token;
+
+        if (_rememberMe) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('isRemembered', true);
+          await prefs.setString('userId', token);
+        }
+
 
         // Сохраняем user_id в глобальную переменную
         userId = token;
@@ -67,16 +78,18 @@ class _AuthPageState extends State<AuthPage> {
   }
 
 
+
   // Функция для перехода на страницу регистрации с передачей уровня
   Future<void> _goToRegistration() async {
-    String? savedLevel = await UserLevelService.getLevelLocally(); // Получаем сохранённый уровень
+    String? savedLevel = await UserLevelService.getLevelLocally(); // ✅ Сюда сохранённый уровень
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => RegistrationPage(selectedLevel: savedLevel ?? "A1"), // Если нет сохранённого, используем A1
+        builder: (context) => RegistrationPage(selectedLevel: savedLevel ?? "A1"),
       ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -180,6 +193,20 @@ class _AuthPageState extends State<AuthPage> {
                         ),
                       ),
                       SizedBox(height: 30),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _rememberMe,
+                            onChanged: (value) {
+                              setState(() {
+                                _rememberMe = value!;
+                              });
+                            },
+                          ),
+                          const Text('Мені есте сақтау'),
+                        ],
+                      ),
+
                       SizedBox(
                         width: 360,
                         child: ElevatedButton(

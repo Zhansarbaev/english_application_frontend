@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'auth.dart'; // Импортируем страницу авторизации
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'main.dart'; // Убедись, что LevelSelectionPage тут доступен
 
 class ProfilePage extends StatelessWidget {
   @override
@@ -19,16 +21,28 @@ class ProfilePage extends StatelessWidget {
             ),
             SizedBox(height: 30),
             ElevatedButton(
-              onPressed: () {
-                // Возвращаем пользователя на страницу авторизации
-                Navigator.pushReplacement(
+              onPressed: () async {
+                // ✅ 1. Выход из Supabase
+                await Supabase.instance.client.auth.signOut();
+
+                // ✅ 2. Очистка SharedPreferences
+                final prefs = await SharedPreferences.getInstance();
+                bool hasSeenIntro = prefs.getBool('hasSeenIntro') ?? false;
+                await prefs.clear();
+                await prefs.setBool('hasSeenIntro', hasSeenIntro);
+// или выборочно, если нужно
+
+                // ✅ 3. Навигация на LevelSelectionPage без возврата
+                await prefs.remove('user_level'); // ❗ удаляем сохранённый уровень
+                Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => AuthPage()),
+                  MaterialPageRoute(builder: (context) => LevelSelectionPage()),
+                      (Route<dynamic> route) => false,
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red, // Красная кнопка
-                foregroundColor: Colors.white, // Белый текст
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
