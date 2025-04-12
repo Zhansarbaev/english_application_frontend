@@ -106,6 +106,41 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
     });
   }
 
+  Future<void> toggleFavorite() async {
+    if (words.isEmpty) return;
+    final wordData = words[currentIndex];
+
+    try {
+      if (isFavorite) {
+        // Убираем слово из избранного
+        final response = await supabase
+            .from('favorites')
+            .delete()
+            .eq('user_id', widget.userId)
+            .eq('word', wordData['word']);
+        debugPrint('Favorite removed: $response');
+      } else {
+        // Добавляем слово в избранное с нужными полями
+        final response = await supabase.from('favorites').insert({
+          'user_id': widget.userId,
+          'word': wordData['word'],
+          'translation_kz': wordData['translation_kz'],
+          'transcription': wordData['transcription'],
+        });
+        debugPrint('Favorite added: $response');
+      }
+
+      // Обновляем состояние
+      setState(() {
+        isFavorite = !isFavorite;
+      });
+    } catch (e) {
+      debugPrint("Ошибка в toggleFavorite(): $e");
+    }
+  }
+
+
+
   Future<void> speakWord(String word) async {
     if (isSoundOn) {
       await flutterTts.setLanguage("en-US");
@@ -269,10 +304,9 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
                           color: isFavorite ? Colors.red : Colors.grey,
                           size: 28,
                         ),
-                        onPressed: () => setState(() {
-                          isFavorite = !isFavorite;
-                        }),
+                        onPressed: toggleFavorite,
                       ),
+
                     ),
                   ],
                 ),

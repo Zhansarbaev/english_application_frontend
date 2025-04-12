@@ -18,6 +18,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _usernameController = TextEditingController();
+
 
   bool _isLoading = false;
   String _errorMessage = '';
@@ -29,6 +31,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
     final String phone = _phoneController.text;
     final String password = _passwordController.text;
     final String confirmPassword = _confirmPasswordController.text;
+    final String username = _usernameController.text;
+
 
     if (password != confirmPassword) {
       setState(() {
@@ -46,8 +50,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
       final response = await Supabase.instance.client.auth.signUp(
         email: email,
         password: password,
-        data: {'phone': phone}, // Сохраняем номер телефона в метаданных
+        data: {
+          'phone': phone,
+          'username': username,
+        },
       );
+
 
       if (response.user != null) {
         final userId = response.user!.id;
@@ -102,10 +110,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 'Аккаунтты құрыңыз',
                 textAlign: TextAlign.center,
                 softWrap: true,
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: Colors.blue[900]),
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: Color(0xFF7B61FF)),
               ),
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 0),
             Expanded(
               child: SingleChildScrollView(
                 child: Form(
@@ -118,7 +126,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         decoration: InputDecoration(
                           labelText: 'Email',
                           filled: true,
-                          fillColor: Color(0xFFF1F4FF),
+                          fillColor: Color(0xFFF0EBFF),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         validator: (value) {
@@ -131,12 +139,28 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       ),
                       SizedBox(height: 20),
                       TextFormField(
+                        controller: _usernameController,
+                        decoration: InputDecoration(
+                          labelText: 'Пайдаланушы аты',
+                          filled: true,
+                          fillColor: Color(0xFFF0EBFF),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return 'Пайдаланушы атыңызды енгізіңіз';
+                          if (value.length < 3) return 'Аты кемінде 3 таңба болуы керек';
+                          return null;
+                        },
+                      ),
+
+                      SizedBox(height: 20),
+                      TextFormField(
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
                         decoration: InputDecoration(
                           labelText: 'Телефон нөмірі',
                           filled: true,
-                          fillColor: Color(0xFFF1F4FF),
+                          fillColor: Color(0xFFF0EBFF),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         validator: (value) {
@@ -154,7 +178,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         decoration: InputDecoration(
                           labelText: 'Құпиясөз ойлап табыңыз',
                           filled: true,
-                          fillColor: Color(0xFFF1F4FF),
+                          fillColor: Color(0xFFF0EBFF),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         validator: (value) {
@@ -169,7 +193,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         decoration: InputDecoration(
                           labelText: 'Құпиясөзді қайта теріңіз',
                           filled: true,
-                          fillColor: Color(0xFFF1F4FF),
+                          fillColor: Color(0xFFF0EBFF),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         validator: (value) {
@@ -194,7 +218,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           onPressed: _isLoading ? null : _register,
                           style: ElevatedButton.styleFrom(
                             padding: EdgeInsets.symmetric(vertical: 15),
-                            backgroundColor: Colors.blue[800],
+                            backgroundColor: Color(0xFF7B61FF),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
@@ -231,4 +255,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
       ),
     );
   }
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _usernameController.dispose(); // 👈 обязательно добавь и его
+    super.dispose();
+  }
+
 }

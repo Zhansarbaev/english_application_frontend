@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'home_page_content.dart'; // Главная страница
-import 'vocabulary_page.dart'; // Страница словаря
-import 'settings_page.dart'; // Страница настроек
-import 'profile_page.dart'; // Страница профиля
+
+import 'home_page_content.dart';
+import 'vocabulary_page.dart';
+import 'settings_page.dart';
+import 'profile_page.dart';
 
 class HomePage extends StatefulWidget {
   final String token;
@@ -11,81 +12,101 @@ class HomePage extends StatefulWidget {
   const HomePage({Key? key, required this.token}) : super(key: key);
 
   @override
-  _HomePageState createState() => _HomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
-  String userId = '';
+  late Future<String?> _userIdFuture;
 
   @override
   void initState() {
     super.initState();
-    fetchUserId();
+    _userIdFuture = _fetchUserId();
   }
 
-  // Получаем userId из Supabase
-  Future<void> fetchUserId() async {
-    debugPrint("🔍 Проверяем текущего пользователя...");
+  Future<String?> _fetchUserId() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    return user?.id;
+  }
 
-    try {
-      final user = Supabase.instance.client.auth.currentUser;
-
-      if (user != null) {
-        setState(() {
-          userId = user.id;
-        });
-        debugPrint("Получен userId: $userId");
-      } else {
-        debugPrint("Ошибка: пользователь не авторизован!");
-      }
-    } catch (e) {
-      debugPrint("Ошибка при получении userId: $e");
-    }
+  Widget _buildBody(String userId) {
+    return IndexedStack(
+      index: _selectedIndex,
+      children: [
+        HomePageContent(token: widget.token, userId: userId),
+        VocabularyPage(),
+        SettingsPage(),
+        ProfilePage(),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Показываем индикатор загрузки, пока userId не загружен
-    if (userId.isEmpty) {
-      debugPrint("Ожидаем загрузки userId...");
-      return Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+    return FutureBuilder<String?>(
+      future: _userIdFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-    debugPrint("Загружается HomePage с userId = $userId, token = ${widget.token}");
+        if (!snapshot.hasData || snapshot.data == null) {
+          return const Scaffold(
+            body: Center(child: Text("Ошибка: Пользователь не найден")),
+          );
+        }
 
-    // Страницы для Bottom Navigation
-    final List<Widget> _pages = [
-      HomePageContent(token: widget.token, userId: userId), // Главная
-      VocabularyPage(), // Страница словаря
-      SettingsPage(), // Настройки
-      ProfilePage(), // Профиль
-    ];
+        final userId = snapshot.data!;
 
-    return Scaffold(
-      appBar: null, // Убираем AppBar, если не нужен
-      body: _pages[_selectedIndex], // Отображаем текущую страницу
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          debugPrint("Переключение на страницу: $_selectedIndex → $index");
-          setState(() => _selectedIndex = index);
-        },
-        items: [
-          BottomNavigationBarItem(icon: Icon(Icons.whatshot), label: "Skills"),
-          BottomNavigationBarItem(icon: Icon(Icons.track_changes), label: "Practice"),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Statistics"),
-          BottomNavigationBarItem(icon: Icon(Icons.account_box), label: "Account"),
-        ],
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.blue[800],
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.grey,
-        selectedLabelStyle: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.bold, fontSize: 14),
-        unselectedLabelStyle: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.normal, fontSize: 12),
-      ),
+        return Scaffold(
+          body: _buildBody(userId),
+          bottomNavigationBar: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Color(0xFF7B61FF), // 💜 Фиолетово-синий мягкий цвет
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: SizedBox(
+                height: 72, // 🟣 Здесь можешь менять высоту по вкусу
+                child: BottomNavigationBar(
+                  currentIndex: _selectedIndex,
+                  onTap: (index) {
+                    setState(() => _selectedIndex = index);
+                  },
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  type: BottomNavigationBarType.fixed,
+                  selectedItemColor: Colors.white,
+                  unselectedItemColor: Colors.white70,
+                  iconSize: 28,               // Иконки побольше
+                  selectedFontSize: 14,       // Размер текста выбранной вкладки
+                  unselectedFontSize: 13,     // Размер остальных вкладок
+                  items: const [
+                    BottomNavigationBarItem(icon: Icon(Icons.auto_awesome), label: "Skills"),
+                    BottomNavigationBarItem(icon: Icon(Icons.flash_on), label: "Practice"),
+                    BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: "Statistics"),
+                    BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
+                  ],
+                ),
+              ),
+
+
+            ),
+          ),
+
+        );
+      },
     );
   }
 }

@@ -14,7 +14,7 @@ class ReadingPage extends StatefulWidget {
 }
 
 class _ReadingPageState extends State<ReadingPage> {
-  final String baseUrl = "https://0983-79-140-224-173.ngrok-free.app/reading";
+  final String baseUrl = "https://32ba-188-124-247-168.ngrok-free.app/reading";
 
   List<String> topics = [];
   String? selectedTopic;
@@ -166,6 +166,54 @@ class _ReadingPageState extends State<ReadingPage> {
     overlay.insert(overlayEntry);
     Future.delayed(Duration(seconds: 2), () => overlayEntry.remove());
   }
+
+  // Функция для построения List<TextSpan> для одного абзаца (без интерактивности)
+  List<TextSpan> _buildInteractiveTextSpans(String paragraph) {
+    // Разбиваем абзац на слова, пробелы и знаки препинания
+    final wordRegex = RegExp(r'(\w+|\s+|[^\w\s]+)');
+    final matches = wordRegex.allMatches(paragraph);
+
+    return matches.map((match) {
+      final word = match.group(0)!;
+      return TextSpan(
+        text: word,
+        style: const TextStyle(
+          fontSize: 16,
+          height: 1.5,
+          color: Colors.black87,
+        ),
+        // Удаляем recognizer, чтобы слова не становились кликабельными
+      );
+    }).toList();
+  }
+
+
+  Widget buildArticleContent(String text) {
+    // Разбиваем текст статьи на абзацы, используя двойной перевод строки как разделитель
+    final paragraphs = text.split('\n\n');
+
+    return ListView.builder(
+      itemCount: paragraphs.length,
+      itemBuilder: (context, index) {
+        final para = paragraphs[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                fontSize: 16,
+                height: 1.5,
+                color: Colors.black87,
+              ),
+              children: _buildInteractiveTextSpans(para),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
 
 
   void _goToHistory() {
@@ -327,7 +375,8 @@ class _ReadingPageState extends State<ReadingPage> {
                               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                             ),
                             SizedBox(height: 8),
-                            Text(article, style: TextStyle(fontSize: 16, height: 1.5)),
+                            buildArticleContent(article),
+
                           ],
                         ),
                       ),

@@ -53,14 +53,14 @@ class _QuizPageState extends State<QuizPage> {
     }
 
     if (percentageByLevel['A1']! < 30) {
-      return 'Beginner (A1)';
+      return 'A1';
     } else if (percentageByLevel['A1']! >= 30 ||
         percentageByLevel['A2']! >= 30) {
-      return 'Elementary (A2)';
+      return 'A2';
     } else if (percentageByLevel['B1']! >= 50) {
-      return 'Intermediate (B1)';
+      return 'B1';
     } else if (percentageByLevel['B2']! >= 70) {
-      return 'Upper-Intermediate (B2)';
+      return 'B2';
     }
 
     return 'Unknown';
@@ -101,17 +101,19 @@ class _QuizPageState extends State<QuizPage> {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
-            icon: Icon(Icons.arrow_back), // Иконка стрелки назад
+            icon: Icon(Icons.arrow_back),
             onPressed: () {
-              Navigator.pop(context); // Возврат на предыдущий экран
+              Navigator.pop(context);
             },
           ),
-          title: Text(
-            '${currentQuestionIndex + 1} сұрақ',
-            style: TextStyle(fontWeight: FontWeight.bold), // Жирный текст
+          title: Text('${currentQuestionIndex + 1} сұрақ'),
+          centerTitle: true,
+          titleTextStyle: TextStyle(
+            fontWeight: FontWeight.w900, // максимальная жирность
+            fontSize: 20,
+            color: Colors.black, // или Colors.white, в зависимости от темы
           ),
-          centerTitle: true, // Центрируем заголовок
-        ),
+        )
       );
     }
 
@@ -132,7 +134,7 @@ class _QuizPageState extends State<QuizPage> {
               value: progress,
               minHeight: 6.0,
               backgroundColor: Colors.grey[300],
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue[800]!),
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7B61FF)!),
             ),
             SizedBox(
               height: 220, // Фиксированная высота для текста вопроса
@@ -158,7 +160,7 @@ class _QuizPageState extends State<QuizPage> {
                     borderRadius: BorderRadius.circular(10),
                     child: Ink(
                       decoration: BoxDecoration(
-                        color: Colors.blue[800],
+                        color: Color(0xFF7B61FF),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Center(

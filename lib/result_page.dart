@@ -66,7 +66,7 @@ class ResultPage extends StatelessWidget {
               style: TextStyle(
                 fontSize: 40,
                 fontWeight: FontWeight.w700,
-                color: Colors.blue[800],
+                color: Color(0xFF7B61FF),
               ),
               textAlign: TextAlign.center,
             ),
@@ -90,7 +90,7 @@ class ResultPage extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[800],
+                  backgroundColor: Color(0xFF7B61FF),
                   padding: EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),

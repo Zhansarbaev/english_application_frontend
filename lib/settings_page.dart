@@ -9,7 +9,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  late Map<String, dynamic> userStats; // Данные пользователя
+  Map<String, dynamic>? userStats;// Данные пользователя
   bool isLoading = true; // Флаг загрузки
 
   @override
@@ -19,37 +19,46 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> fetchUserStats() async {
-    try {
-      // Логируем начало запроса
-      print('Запрос статистики пользователя для userId: $userId');
+    print('🚀 fetchUserStats вызван');
+    print('🔍 userId: $userId');  // Убедись, что оно не пустое
 
-      final response = await http.get(Uri.parse('https://c6e5-79-140-224-173.ngrok-free.app/statistic/user/${userId}/stats'));
+    if (userId == null || userId.isEmpty) {
+      print('❌ userId не установлен или пустой!');
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    }
+
+    final url = 'https://32ba-188-124-247-168.ngrok-free.app/statistic/user/$userId/stats';
+    print('🌐 Отправляем GET запрос по URL: $url');
+
+    try {
+      final response = await http.get(Uri.parse(url));
+
+      print('📦 Статус ответа: ${response.statusCode}');
+      print('📨 Тело ответа: ${response.body}');
 
       if (response.statusCode == 200) {
         setState(() {
-          userStats = json.decode(response.body); // Декодируем ответ как JSON
-          isLoading = false; // Данные загружены
+          userStats = json.decode(response.body);
+          isLoading = false;
         });
-
-        // Логируем успешный ответ и содержимое
-        print('Данные пользователя получены: $userStats');
+        print('✅ Данные пользователя получены: $userStats');
       } else {
         setState(() {
           isLoading = false;
         });
-
-        // Логируем ошибку
         print('Ошибка при запросе данных пользователя: ${response.statusCode}');
       }
     } catch (e) {
       setState(() {
         isLoading = false;
       });
-
-      // Логируем ошибку при выполнении запроса
       print('Ошибка при выполнении запроса: $e');
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +74,7 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: isLoading
+        child: isLoading || userStats == null
             ? Center(child: CircularProgressIndicator()) // Пока данные загружаются, показываем индикатор загрузки
             : SingleChildScrollView(  // Оборачиваем все содержимое в прокручиваемый контейнер
           child: Column(
@@ -73,12 +82,12 @@ class _SettingsPageState extends State<SettingsPage> {
             children: [
               _userInfoPanel(),
               SizedBox(height: 20),
-              _statCard('Vocabulary', userStats['vocabulary']?['learned'] ?? 0,
-                  userStats['vocabulary']?['total'] ?? 0, Icons.book),
+              _statCard('Vocabulary', userStats?['vocabulary']?['learned'] ?? 0,
+                  userStats?['vocabulary']?['total'] ?? 0, Icons.book),
               SizedBox(height: 20),
-              _statCard('Listening', userStats['listening']?['total_sessions'] ?? 0, 100, Icons.headset),
+              _statCard('Listening', userStats?['listening']?['total_sessions'] ?? 0, 100, Icons.headset),
               SizedBox(height: 20),
-              _statCard('Reading', userStats['reading']?['read'] ?? 0, userStats['reading']?['total_topics'] ?? 0, Icons.library_books),
+              _statCard('Reading', userStats?['reading']?['read'] ?? 0, userStats?['reading']?['total_topics'] ?? 0, Icons.library_books),
             ],
           ),
         ),
@@ -88,7 +97,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _userInfoPanel() {
     // Логируем значения перед рендерингом
-    print('User Info: Email: ${userStats['user']?['email'] ?? 'Не указан'}, Level: ${userStats['user']?['level'] ?? 'Не указан'}, Unlocked Level: ${userStats['user']?['unlocked_level'] ?? 'Не указан'}');
+    print('User Info: Email: ${userStats?['user']?['email'] ?? 'Не указан'}, Level: ${userStats?['user']?['level'] ?? 'Не указан'}, Unlocked Level: ${userStats?['user']?['unlocked_level'] ?? 'Не указан'}');
 
     return Container(
       padding: EdgeInsets.all(16),
@@ -112,17 +121,17 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           SizedBox(height: 10),
           Text(
-            'Email: ${userStats['user']?['email'] ?? 'Не указан'}',  // Добавляем обработку null
+            'Email: ${userStats?['user']?['email'] ?? 'Не указан'}',  // Добавляем обработку null
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 10),
           Text(
-            'Level: ${userStats['user']?['level'] ?? 'Не указан'}',  // Добавляем обработку null
+            'Level: ${userStats?['user']?['level'] ?? 'Не указан'}',  // Добавляем обработку null
             style: TextStyle(fontSize: 16),
           ),
           SizedBox(height: 10),
           Text(
-            'Unlocked Level: ${userStats['user']?['unlocked_level'] ?? 'Не указан'}',  // Добавляем обработку null
+            'Unlocked Level: ${userStats?['user']?['unlocked_level'] ?? 'Не указан'}',  // Добавляем обработку null
             style: TextStyle(fontSize: 16),
           ),
         ],

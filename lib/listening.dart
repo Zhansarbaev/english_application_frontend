@@ -24,6 +24,9 @@ class _ListeningPageState extends State<ListeningPage> {
   int? timeUntilNextPodcastChange;
   int? timeUntilNextVideoChange;
 
+  bool isLoadingPodcasts = true;
+  bool isLoadingVideos = true;
+
   final List<String> podcastTopics = ["General", "Vocabulary", "Pronunciation"];
   final List<String> videoTopics = ["Business", "Grammar", "Listening"];
 
@@ -175,11 +178,14 @@ class _ListeningPageState extends State<ListeningPage> {
   Future<void> _fetchPodcasts() async {
     if (selectedPodcastTopic == null) return;
 
-    final url = Uri.parse('https://379b-79-140-224-173.ngrok-free.app/listening/podcasts?user_id=${widget.userId}&topic=$selectedPodcastTopic');
+    final url = Uri.parse('https://32ba-188-124-247-168.ngrok-free.app/listening/podcasts?user_id=${widget.userId}&topic=$selectedPodcastTopic');
 
     print("📡 Отправляем запрос: $url");
 
     try {
+      setState(() {
+        isLoadingPodcasts = true;
+      });
       final response = await http.get(url);
       print("Статус код: ${response.statusCode}");
       print("Ответ сервера: ${response.body}");
@@ -193,7 +199,9 @@ class _ListeningPageState extends State<ListeningPage> {
             podcasts = data.containsKey('podcasts')
                 ? List<Map<String, dynamic>>.from(data['podcasts']).take(3).toList()
                 : [];
+            isLoadingPodcasts = false; // 👈 вот это добавь
           });
+
 
           print("🎧 Загруженные подкасты: $podcasts");
 
@@ -211,7 +219,7 @@ class _ListeningPageState extends State<ListeningPage> {
   /// Разблокирует следующую карточку, если три последних ответа были верны
 
   Future<void> _unlockNextCard() async {
-    final url = Uri.parse('https://379b-79-140-224-173.ngrok-free.app/listening/unlock_card');
+    final url = Uri.parse('https://32ba-188-124-247-168.ngrok-free.app/listening/unlock_card');
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
@@ -236,7 +244,7 @@ class _ListeningPageState extends State<ListeningPage> {
 
   Future<void> _fetchVideos() async {
     if (selectedVideoTopic == null) return;
-    final url = Uri.parse('https://379b-79-140-224-173.ngrok-free.app/listening/videos?user_id=${widget.userId}&topic=$selectedVideoTopic');
+    final url = Uri.parse('https://32ba-188-124-247-168.ngrok-free.app/listening/videos?user_id=${widget.userId}&topic=$selectedVideoTopic');
 
     try {
       final response = await http.get(url);
@@ -322,6 +330,15 @@ class _ListeningPageState extends State<ListeningPage> {
     required String topicKey,
     required String timeKey,
   }) {
+    // Проверяем, что selectedValue существует в списке options
+    // Если нет - сбрасываем до null
+    String? validValue = selectedValue;
+    if (selectedValue != null && !options.contains(selectedValue)) {
+      validValue = null;
+    }
+
+    bool isLocked = validValue != null && timeLeft != null && timeLeft > 0;
+
     return Container(
       color: Color(0xFF84BEDB),
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -331,22 +348,19 @@ class _ListeningPageState extends State<ListeningPage> {
           isExpanded: true,
           underline: SizedBox(),
           dropdownColor: Color(0xFF84BEDB),
-          value: selectedValue,
+          value: validValue, // Используем проверенное значение
           hint: Text(
             hint,
             style: TextStyle(color: Colors.black),
             textAlign: TextAlign.center,
           ),
-          // вот тут?
-          disabledHint: Text( // <-- вот это вставляешь перед items
-            "Недоступно",
-            style: TextStyle(color: Colors.red),
-          ),
           items: options.map((String option) {
-            // Если тема ещё не выбрана, показываем все как доступные (открытые замки)
-            IconData iconData = selectedValue == null ? Icons.lock_open : (option == selectedValue ? Icons.lock_open : Icons.lock_outline);
+            IconData iconData = isLocked && option != validValue
+                ? Icons.lock_outline
+                : Icons.lock_open;
+
             return DropdownMenuItem<String>(
-              value: option,
+              value: option, // Это значение должно быть уникальным
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -358,22 +372,25 @@ class _ListeningPageState extends State<ListeningPage> {
             );
           }).toList(),
           onChanged: (String? newValue) async {
-            // Если тема уже выбрана и осталось время до смены – блокируем изменение
-            if (selectedValue != null && timeLeft != null && timeLeft > 0) {
+            if (isLocked) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text("Вы можете сменить тему через $timeLeft дней")),
               );
               return;
             }
+
             setState(() {
               if (hint.contains("подкаст")) {
-                selectedPodcastTopic = newValue!;
+                selectedPodcastTopic = newValue;
               } else {
-                selectedVideoTopic = newValue!;
+                selectedVideoTopic = newValue;
               }
             });
-            await _saveSelectedTopic(newValue!, topicKey, timeKey);
-            fetchFunction();
+
+            if (newValue != null) {
+              await _saveSelectedTopic(newValue, topicKey, timeKey);
+              fetchFunction();
+            }
           },
         ),
       ),
@@ -382,8 +399,41 @@ class _ListeningPageState extends State<ListeningPage> {
 
   /// Построение списка подкастов с управлением
   List<Widget> _buildPodcastList() {
+    if (isLoadingPodcasts) {
+      // Показываем заглушки-плейсхолдеры
+      return List.generate(3, (index) {
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 4,
+          child: ListTile(
+            title: Container(
+              width: double.infinity,
+              height: 20,
+              color: Colors.grey[300],
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.play_circle_fill, color: Colors.grey),
+                Icon(Icons.replay, color: Colors.grey),
+              ],
+            ),
+          ),
+        );
+      });
+    }
+
+    // Когда подкасты загружены
     return podcasts.map((podcast) {
       return Card(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 4,
         child: ListTile(
           title: Text(
             podcast['title'],
@@ -412,6 +462,7 @@ class _ListeningPageState extends State<ListeningPage> {
     }).toList();
   }
 
+
   /// Построение списка видео, открывающихся через YouTube
   List<Widget> _buildVideoList() {
     return videos.map((video) {
@@ -431,18 +482,26 @@ class _ListeningPageState extends State<ListeningPage> {
   /// Фиксированный аудиоплеер, закрепленный внизу экрана
   Widget _buildPlayer() {
     return Container(
-      color: Colors.black87,
-      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+      decoration: BoxDecoration(
+        color: Color(0xFF7B61FF),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Slider(
             min: 0,
-            max: _duration.inSeconds > 0 ? _duration.inSeconds.toDouble() : 1.0,
-            value: _position.inSeconds.toDouble().clamp(0.0, _duration.inSeconds > 0 ? _duration.inSeconds.toDouble() : 1.0),
+            max: _duration.inSeconds.toDouble().clamp(1, double.infinity),
+            value: _position.inSeconds.toDouble().clamp(0, _duration.inSeconds.toDouble()),
             onChanged: (value) {
               _audioPlayer.seek(Duration(seconds: value.toInt()));
             },
+            activeColor: Colors.white,
+            inactiveColor: Colors.white54,
           ),
           Text(
             "${_formatDuration(_position)} / ${_formatDuration(_duration)}",
@@ -451,38 +510,21 @@ class _ListeningPageState extends State<ListeningPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+              IconButton(icon: Icon(Icons.replay_10, color: Colors.white), onPressed: () => _audioPlayer.seek(_position - Duration(seconds: 10))),
               IconButton(
-                icon: Icon(Icons.skip_previous, color: Colors.white, size: 30),
-                onPressed: () {
-                  // Логика переключения к предыдущему треку (если реализовано)
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.replay_10, color: Colors.white, size: 30),
-                onPressed: () => _audioPlayer.seek(_position - Duration(seconds: 10)),
-              ),
-              IconButton(
-                icon: Icon(isPlayingPodcast ? Icons.pause_circle : Icons.play_circle, color: Colors.white, size: 40),
+                icon: Icon(
+                  isPlayingPodcast ? Icons.pause_circle : Icons.play_circle,
+                  color: Colors.white,
+                  size: 36,
+                ),
                 onPressed: () {
                   if (currentAudioUrl != null) {
                     _playPausePodcast(currentAudioUrl!);
                   }
                 },
               ),
-              IconButton(
-                icon: Icon(Icons.forward_10, color: Colors.white, size: 30),
-                onPressed: () => _audioPlayer.seek(_position + Duration(seconds: 10)),
-              ),
-              IconButton(
-                icon: Icon(Icons.skip_next, color: Colors.white, size: 30),
-                onPressed: () {
-                  // Логика переключения к следующему треку (если реализовано)
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.replay, color: Colors.orange, size: 30),
-                onPressed: _restartPodcast,
-              ),
+              IconButton(icon: Icon(Icons.forward_10, color: Colors.white), onPressed: () => _audioPlayer.seek(_position + Duration(seconds: 10))),
+              IconButton(icon: Icon(Icons.replay, color: Colors.orange), onPressed: _restartPodcast),
             ],
           ),
         ],
@@ -490,88 +532,177 @@ class _ListeningPageState extends State<ListeningPage> {
     );
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Listening', style: TextStyle(color: Colors.black)),
-        centerTitle: true,
-        backgroundColor: Color(0xFF84BEDB),
-        iconTheme: IconThemeData(color: Colors.black),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.all(16.0),
-              children: [
-                 //
-                // Выбор темы подкастов
-                _buildDropdown(
-                  hint: "Выберите тему для подкаста",
-                  options: podcastTopics,
-                  selectedValue: selectedPodcastTopic,
-                  timeLeft: timeUntilNextPodcastChange,
-                  fetchFunction: _fetchPodcasts,
-                  topicKey: 'lastPodcastTopic',
-                  timeKey: 'lastPodcastChange',
-                ),
-                ..._buildPodcastList(),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            backgroundColor: Colors.transparent,
+            expandedHeight: 110,
+            collapsedHeight: 60,
+            flexibleSpace: LayoutBuilder(
+              builder: (context, constraints) {
+                final bool isCollapsed = constraints.maxHeight <= 80;
 
-                SizedBox(height: 20),
-
-                // Выбор темы видео
-                _buildDropdown(
-                  hint: "Выберите тему для видео",
-                  options: videoTopics,
-                  selectedValue: selectedVideoTopic,
-                  timeLeft: timeUntilNextVideoChange,
-                  fetchFunction: _fetchVideos,
-                  topicKey: 'lastVideoTopic',
-                  timeKey: 'lastVideoChange',
-                ),
-                ..._buildVideoList(),
-
-
-                SizedBox(height: 20), // Отступ перед кнопкой
-
-// Кнопка "Пройти проверку" в самом низу списка
-                ElevatedButton(
-                  onPressed: () {
-                    if (selectedPodcastTopic == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("❗ Выберите тему перед проверкой ответа")),
-                      );
-                      return;
-                    }
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AnswerCheckPage(
-                          userId: widget.userId,
-                          selectedTopic: selectedPodcastTopic!,
+                return Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF7B61FF),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(24),
+                      bottomRight: Radius.circular(24),
+                    ),
+                  ),
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top + 9,
+                    left: 16,
+                    right: 16,
+                    bottom: 20,
+                  ),
+                  child: Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      // Верхний заголовок — всегда отображается
+                      const Align(
+                        alignment: Alignment.topCenter,
+                        child: Text(
+                          '🎧 Listening',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                    );
-                  },
-                  child: Text("Пройти проверку"),
-                ),
 
-                SizedBox(height: 20), // Отступ перед концом списка
-
-              ],
+                      // Нижний текст — просто исчезает при скролле
+                      if (!isCollapsed)
+                        const Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 34.8),
+                            child: Text(
+                              'күнделікті жазбаларды тыңдау',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white70,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
             ),
+
+          ),
+          SliverToBoxAdapter(
+            child: SizedBox(height: 35), // Adjust this value as needed
           ),
 
 
 
-          // Фиксированный плеер подкаста внизу, если подкаст воспроизводится
-          if (isPlayingPodcast) _buildPlayer(),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          SliverList(
+            delegate: SliverChildListDelegate([
+
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    SizedBox(height: 5),
+
+                    /// Выбор подкастов
+                    _buildDropdown(
+                      hint: "Выберите тему для подкаста",
+                      options: podcastTopics,
+                      selectedValue: selectedPodcastTopic,
+                      timeLeft: timeUntilNextPodcastChange,
+                      fetchFunction: _fetchPodcasts,
+                      topicKey: 'lastPodcastTopic',
+                      timeKey: 'lastPodcastChange',
+                    ),
+                    SizedBox(height: 5),
+                    ..._buildPodcastList(),
+
+                    SizedBox(height: 20),
+
+                    /// Выбор видео
+                    _buildDropdown(
+                      hint: "Выберите тему для видео",
+                      options: videoTopics,
+                      selectedValue: selectedVideoTopic,
+                      timeLeft: timeUntilNextVideoChange,
+                      fetchFunction: _fetchVideos,
+                      topicKey: 'lastVideoTopic',
+                      timeKey: 'lastVideoChange',
+                    ),
+                    ..._buildVideoList(),
+
+                    SizedBox(height: 20),
+
+                    /// Кнопка "Пройти проверку"
+                    ElevatedButton(
+                      onPressed: () {
+                        if (selectedPodcastTopic == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("❗ Выберите тему перед проверкой ответа")),
+                          );
+                          return;
+                        }
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AnswerCheckPage(
+                              userId: widget.userId,
+                              selectedTopic: selectedPodcastTopic!,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Text("Пройти проверку"),
+                    ),
+
+                    SizedBox(height: 10),
+                  ],
+                ),
+              ),
+            ]),
+          ),
         ],
       ),
+
+      // Плеер внизу, если подкаст воспроизводится
+      bottomNavigationBar: isPlayingPodcast ? _buildPlayer() : null,
     );
   }
+
   @override
   void dispose() {
     _audioPlayer.stop();

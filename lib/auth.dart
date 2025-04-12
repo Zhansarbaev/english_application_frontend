@@ -96,7 +96,7 @@ class _AuthPageState extends State<AuthPage> {
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
-                color: Colors.blue[900],
+                color: Color(0xFF7B61FF),
               ),
             ),
             SizedBox(height: 20),
@@ -122,13 +122,13 @@ class _AuthPageState extends State<AuthPage> {
                         decoration: InputDecoration(
                           labelText: 'Email',
                           filled: true,
-                          fillColor: Color(0xFFF1F4FF),
+                          fillColor: Color(0xFFF0EBFF),
                           enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey[400] ?? Colors.grey, width: 2),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.blue[900] ?? Colors.blue, width: 2.5),
+                            borderSide: BorderSide(color: Color(0xFFEDE7F6), width: 2.5),
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
@@ -140,13 +140,13 @@ class _AuthPageState extends State<AuthPage> {
                         decoration: InputDecoration(
                           labelText: 'Құпиясөз',
                           filled: true,
-                          fillColor: Color(0xFFF1F4FF),
+                          fillColor: Color(0xFFF0EBFF),
                           enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey[400] ?? Colors.grey, width: 2),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.blue[900] ?? Colors.blue, width: 2.5),
+                            borderSide: BorderSide(color: Color(0xFF7B61FF), width: 2.5),
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
@@ -168,12 +168,12 @@ class _AuthPageState extends State<AuthPage> {
                             );
                           },
                           style: TextButton.styleFrom(
-                            foregroundColor: Colors.blue[900],
+                            foregroundColor: Color(0xFF7B61FF),
                           ),
                           child: Text(
                             'Құпиясөзді ұмыттыңыз ба?',
                             style: TextStyle(
-                              color: Colors.blue[900],
+                              color: Color(0xFF7B61FF),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -186,7 +186,7 @@ class _AuthPageState extends State<AuthPage> {
                           onPressed: _login,
                           style: ElevatedButton.styleFrom(
                             padding: EdgeInsets.symmetric(vertical: 15),
-                            backgroundColor: Colors.blue[800],
+                            backgroundColor: Color(0xFF7B61FF),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),

@@ -14,7 +14,7 @@ class HistoryReadingPage extends StatefulWidget {
 }
 
 class _HistoryReadingPageState extends State<HistoryReadingPage> {
-  final String baseUrl = "https://0983-79-140-224-173.ngrok-free.app/reading";
+  final String baseUrl = "https://682a-2a03-32c0-5001-a883-c8a0-1a09-790a-7e3f.ngrok-free.app/reading";
   List<dynamic> history = [];
   bool isLoading = false;
 

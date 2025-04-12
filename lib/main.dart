@@ -16,8 +16,11 @@ void main() async {
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
     //url: 'https://xwwpuygfkfbrqvzuhkkj.supabase.co', // Твой Supabase URL
+
     //anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3d3B1eWdma2ZicnF2enVoa2tqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5MDQxNDAsImV4cCI6MjA1MzQ4MDE0MH0.uUluMbnqGihPwCJWCf-rkaIc9j140Si-qUPDNbnHou8', // Твой API Key
+
   );
+
 
   runApp(MyApp());
 }
@@ -96,7 +99,7 @@ class _IntroSliderState extends State<IntroSlider> {
               right: 20,
               child: TextButton(
                 onPressed: () => _goToLevelSelection(context),
-                child: Text("Өткізу", style: TextStyle(color: Colors.blue[800])),
+                child: Text("Өткізу", style: TextStyle(color: Color(0xFF7B61FF))),
               ),
             ),
           // Индикаторы страниц
@@ -122,7 +125,7 @@ class _IntroSliderState extends State<IntroSlider> {
                 onPressed: () => _goToLevelSelection(context),
                 child: Text("Оқуды бастау"),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[800],
+                  backgroundColor: Color(0xFF7B61FF),
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
@@ -172,7 +175,7 @@ class _IntroSliderState extends State<IntroSlider> {
       height: 10,
       width: isActive ? 20 : 10,
       decoration: BoxDecoration(
-        color: isActive ? Colors.blue[800] : Colors.grey,
+        color: isActive ? Color(0xFF7B61FF) : Colors.grey,
         borderRadius: BorderRadius.circular(30),
       ),
     );
@@ -203,7 +206,8 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
       // Переход на регистрацию с переданным уровнем
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => RegistrationPage(selectedLevel: _selectedLevel!)),
+        MaterialPageRoute(builder: (context) =>
+            RegistrationPage(selectedLevel: _selectedLevel!)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -230,10 +234,14 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                 ),
               ),
               SizedBox(height: 12),
-              _buildLevelOption("A1", "Бұл деңгейде қарапайым сөйлемдер мен сөздер қолданылады."),
-              _buildLevelOption("A2", "Сөйлеу және жазу дағдылары даму үстінде."),
-              _buildLevelOption("B1", "Бұл деңгейде ағылшын тілінде еркін сөйлесуге болады."),
-              _buildLevelOption("B2", "Күрделі мәтіндермен жұмыс істеуге болады."),
+              _buildLevelOption("A1",
+                  "Бұл деңгейде қарапайым сөйлемдер мен сөздер қолданылады."),
+              _buildLevelOption(
+                  "A2", "Сөйлеу және жазу дағдылары даму үстінде."),
+              _buildLevelOption(
+                  "B1", "Бұл деңгейде ағылшын тілінде еркін сөйлесуге болады."),
+              _buildLevelOption(
+                  "B2", "Күрделі мәтіндермен жұмыс істеуге болады."),
               SizedBox(height: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -248,7 +256,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                     },
                     child: Text("Өз деңгейімді білмеймін"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF84BEDB),
+                      backgroundColor: const Color(0xFFB79BFF),
                       foregroundColor: Colors.white,
                       padding: EdgeInsets.symmetric(vertical: 15),
                       shape: RoundedRectangleBorder(
@@ -258,10 +266,13 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                   ),
                   SizedBox(height: 10),
                   ElevatedButton(
-                    onPressed: _selectedLevel == null ? null : () => _goToNextScreen(context),
+                    onPressed: _selectedLevel == null ? null : () =>
+                        _goToNextScreen(context),
                     child: Text("Жалғастыру"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _selectedLevel == null ? Colors.white : Colors.blue[800],
+                      backgroundColor: _selectedLevel == null
+                          ? Colors.white
+                          : Color(0xFF7B61FF),
                       foregroundColor: Colors.white,
                       padding: EdgeInsets.symmetric(vertical: 15),
                       shape: RoundedRectangleBorder(
@@ -286,14 +297,18 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
       child: Align(
         alignment: Alignment.center,
         child: Container(
-          width: 500,
-          margin: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-          padding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+          width: MediaQuery
+              .of(context)
+              .size
+              .width * 0.9,
+          // 90% ширины экрана
+          margin: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
           decoration: BoxDecoration(
-            color: _selectedLevel == level ? Colors.blue[800] : Colors.white,
-            border: Border.all(color: Colors.blue[800]!),
+            color: _selectedLevel == level ? Color(0xFF7B61FF) : Colors.white,
+            border: Border.all(color: Color(0xFF7B61FF)!),
             borderRadius: BorderRadius.circular(15),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
                 color: Colors.black12,
                 blurRadius: 5,
@@ -309,10 +324,10 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: _selectedLevel == level ? Colors.white : Colors.blue[800],
+                  color: _selectedLevel == level ? Colors.white : Colors.black,
                 ),
               ),
-              SizedBox(height: 5),
+              const SizedBox(height: 5),
               Text(
                 description,
                 style: TextStyle(
