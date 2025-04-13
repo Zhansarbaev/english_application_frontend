@@ -115,12 +115,13 @@ class _ListeningPageState extends State<ListeningPage> {
 
   Future<void> _loadLastSelectedTopics() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove('savedVideos');
-    await prefs.remove('savedPodcasts');
-
-    // Удаляем именно кэш другого пользователя (на всякий случай)
-    await prefs.remove('savedVideos_${widget.userId}');
-    await prefs.remove('savedPodcasts_${widget.userId}');// 👈 Удаляем старый кэш
+    // 👇 Добавляем проверку на смену пользователя
+    String? lastUserId = prefs.getString('lastUserId');
+    if (lastUserId != widget.userId) {
+      await prefs.remove('savedVideos_$lastUserId');
+      await prefs.remove('savedPodcasts_$lastUserId');
+      await prefs.setString('lastUserId', widget.userId);
+    }
 
     int now = DateTime
         .now()
@@ -200,7 +201,7 @@ class _ListeningPageState extends State<ListeningPage> {
   Future<void> _fetchPodcasts() async {
     if (selectedPodcastTopic == null) return;
 
-    final url = Uri.parse('https://32ba-188-124-247-168.ngrok-free.app/listening/podcasts?user_id=${widget.userId}&topic=$selectedPodcastTopic');
+    final url = Uri.parse('https://409b-188-124-247-168.ngrok-free.app/listening/podcasts?user_id=${widget.userId}&topic=$selectedPodcastTopic');
 
     print("📡 Отправляем запрос: $url");
 
@@ -241,7 +242,7 @@ class _ListeningPageState extends State<ListeningPage> {
   /// Разблокирует следующую карточку, если три последних ответа были верны
 
   Future<void> _unlockNextCard() async {
-    final url = Uri.parse('https://32ba-188-124-247-168.ngrok-free.app/listening/unlock_card');
+    final url = Uri.parse('https://409b-188-124-247-168.ngrok-free.app/listening/unlock_card');
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
@@ -272,7 +273,7 @@ class _ListeningPageState extends State<ListeningPage> {
     setState(() {
       isLoadingVideos = true;
     });
-    final url = Uri.parse('https://32ba-188-124-247-168.ngrok-free.app/listening/videos?user_id=${widget.userId}&topic=$selectedVideoTopic');
+    final url = Uri.parse('https://409b-188-124-247-168.ngrok-free.app/listening/videos?user_id=${widget.userId}&topic=$selectedVideoTopic');
 
     try {
       final response = await http.get(url);
@@ -781,10 +782,7 @@ class _ListeningPageState extends State<ListeningPage> {
                     ..._buildVideoList(),
 
                     SizedBox(height: 30),
-                    ElevatedButton(
-                      onPressed: _fetchVideos,
-                      child: Text('Обновить видео'),
-                    ),
+
 
 
                     /// Кнопка "Пройти проверку"

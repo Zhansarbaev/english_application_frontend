@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'home_page_content.dart';
-import 'vocabulary_page.dart';
+import 'chat_start_page.dart';
 import 'settings_page.dart';
 import 'profile_page.dart';
 
@@ -35,7 +35,7 @@ class _HomePageState extends State<HomePage> {
       index: _selectedIndex,
       children: [
         HomePageContent(token: widget.token, userId: userId),
-        VocabularyPage(),
+        ChatStartPage(userId: userId),
         SettingsPage(),
         ProfilePage(),
       ],
