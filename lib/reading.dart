@@ -14,7 +14,7 @@ class ReadingPage extends StatefulWidget {
 }
 
 class _ReadingPageState extends State<ReadingPage> {
-  final String baseUrl = "https://32ba-188-124-247-168.ngrok-free.app/reading";
+  final String baseUrl = "https://98e9-188-124-236-208.ngrok-free.app/reading";
 
   List<String> topics = [];
   String? selectedTopic;

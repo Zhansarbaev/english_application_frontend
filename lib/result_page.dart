@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'registration.dart'; //  Добавляем импорт
-import 'user_level_service.dart'; //  Добавляем импорт
+import 'registration.dart'; // Добавляем импорт
+import 'user_level_service.dart'; // Добавляем импорт
 
 class ResultPage extends StatelessWidget {
   final Map<String, int> scoreByLevel;
@@ -18,7 +17,7 @@ class ResultPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           '',
           style: TextStyle(
             fontWeight: FontWeight.w700,
@@ -33,55 +32,97 @@ class ResultPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 40.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16.0),
-              child: Image.asset(
-                'assets/images/quiz.jpeg',
-                height: 150,
-                width: 300,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          SizedBox(height: 130),
+          // Отступ сверху (если требуется)
+          const SizedBox(height: 60),
+
+          // Белый прямоугольник с тенями и закруглёнными краями,
+          // включающий в себя изображение и текст.
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(
-              'Сіздің деңгейіңіз:',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: Colors.black,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              // Увеличиваем высоту контейнера за счёт содержания
+              // minHeight можно увеличить, если требуется больше пространства.
+              constraints: const BoxConstraints(minHeight: 380),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    offset: Offset(0, 4),
+                    blurRadius: 8,
+                  ),
+                ],
               ),
-              textAlign: TextAlign.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Изображение внутри прямоугольника
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.asset(
+                      'assets/images/passed.png',
+                      height: 200,
+                      width: 360,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Текст "Сіздің деңгейіңіз:"
+                  const Text(
+                    'Сіздің деңгейіңіз:',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  // Значение уровня
+                  Text(
+                    level,
+                    style: const TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF7B61FF),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  // Краткое сведение по уровням (пояснилка)
+                  const Text(
+                    "A1 – негізгі сөздер мен тіркестерді меңгеру;\n"
+                        "A2 – күнделікті тақырыптарды түсіне алу;\n"
+                        "B1 – таныс жағдайларда еркін сөйлесу;\n"
+                        "B2 – күрделі мәтіндерді түсініп, пікір айту.",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black54,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
           ),
-          SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(
-              level,
-              style: TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF7B61FF),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          Expanded(child: Container()),
+
+          // Отступ ниже прямоугольника
+          const SizedBox(height: 100),
+
+          // Кнопка "Жалғастыру"
           Padding(
             padding: const EdgeInsets.only(bottom: 50),
             child: SizedBox(
-              width: 350.0,
+              width: 380.0,
               child: ElevatedButton(
                 onPressed: () async {
                   // Сохраняем уровень локально
                   await UserLevelService.saveLevelLocally(level);
 
-                  //  Переход на регистрацию с переданным уровнем
+                  // Переход на страницу регистрации с выбранным уровнем
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
@@ -90,13 +131,14 @@ class ResultPage extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF7B61FF),
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: const Color(0xFF7B61FF),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  elevation: 8,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: Text(
+                child: const Text(
                   'Жалғастыру',
                   style: TextStyle(fontSize: 16, color: Colors.white),
                 ),

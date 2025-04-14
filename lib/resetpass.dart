@@ -75,7 +75,7 @@ class _ResetPassPageState extends State<ResetPassPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFFAFAFA),
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true, // Не скрывает кнопку при клавиатуре
       appBar: AppBar(
         title: null,
@@ -95,7 +95,11 @@ class _ResetPassPageState extends State<ResetPassPage> {
                 SizedBox(height: 60), // Оставляем место сверху
                 Text(
                   'Құпиясөзді қалпына келтіру',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue[800]),
+                  style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF7B61FF)),
+                      textAlign: TextAlign.center
                 ),
                 SizedBox(height: 20),
                 Text(
@@ -110,20 +114,21 @@ class _ResetPassPageState extends State<ResetPassPage> {
                   controller: _emailController,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Color(0xFFF1F4FF),
+                    fillColor: Color(0xFFF0EBFF),
                     labelText: 'Email',
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.emailAddress,
                 ),
-                SizedBox(height: 80), // Оставляем место перед кнопкой
+                SizedBox(height: 50), // Оставляем место перед кнопкой
 
                 //  Кнопка отправки Email
                 ElevatedButton(
                   onPressed: _isLoading ? null : _sendResetEmail,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[800],
-                    fixedSize: Size(360, 50),
+                    backgroundColor: Color(0xFF7B61FF),
+                    elevation: 8,
+                    fixedSize: Size(380, 50),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),

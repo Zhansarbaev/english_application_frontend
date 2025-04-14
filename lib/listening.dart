@@ -201,7 +201,7 @@ class _ListeningPageState extends State<ListeningPage> {
   Future<void> _fetchPodcasts() async {
     if (selectedPodcastTopic == null) return;
 
-    final url = Uri.parse('https://409b-188-124-247-168.ngrok-free.app/listening/podcasts?user_id=${widget.userId}&topic=$selectedPodcastTopic');
+    final url = Uri.parse('https://98e9-188-124-236-208.ngrok-free.app/listening/podcasts?user_id=${widget.userId}&topic=$selectedPodcastTopic');
 
     print("📡 Отправляем запрос: $url");
 
@@ -242,7 +242,7 @@ class _ListeningPageState extends State<ListeningPage> {
   /// Разблокирует следующую карточку, если три последних ответа были верны
 
   Future<void> _unlockNextCard() async {
-    final url = Uri.parse('https://409b-188-124-247-168.ngrok-free.app/listening/unlock_card');
+    final url = Uri.parse('https://98e9-188-124-236-208.ngrok-free.app/listening/unlock_card');
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
@@ -273,7 +273,7 @@ class _ListeningPageState extends State<ListeningPage> {
     setState(() {
       isLoadingVideos = true;
     });
-    final url = Uri.parse('https://409b-188-124-247-168.ngrok-free.app/listening/videos?user_id=${widget.userId}&topic=$selectedVideoTopic');
+    final url = Uri.parse('https://98e9-188-124-236-208.ngrok-free.app/listening/videos?user_id=${widget.userId}&topic=$selectedVideoTopic');
 
     try {
       final response = await http.get(url);

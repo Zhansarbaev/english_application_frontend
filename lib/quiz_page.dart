@@ -99,6 +99,7 @@ class _QuizPageState extends State<QuizPage> {
   Widget build(BuildContext context) {
     if (questions.isEmpty) {
       return Scaffold(
+        backgroundColor: Colors.white,
         appBar: AppBar(
           leading: IconButton(
             icon: Icon(Icons.arrow_back),

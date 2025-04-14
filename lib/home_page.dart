@@ -61,15 +61,24 @@ class _HomePageState extends State<HomePage> {
 
         final userId = snapshot.data!;
 
+        // Если _selectedIndex == 1 (ChatStartPage), фон будет #4570db,
+        // иначе - белый
+        final scaffoldBgColor =
+        _selectedIndex == 1 ? const Color(0xFF2B63E2) : Colors.white;
+
         return Scaffold(
+          // Меняем фон всего экрана
+          backgroundColor: scaffoldBgColor,
+
           body: _buildBody(userId),
+
           bottomNavigationBar: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Container(
               decoration: BoxDecoration(
-                color: Color(0xFF7B61FF), // 💜 Фиолетово-синий мягкий цвет
+                color: const Color(0xFF7B61FF), // Цвет подложки под нижнюю панель
                 borderRadius: BorderRadius.circular(15),
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(
                     color: Colors.black26,
                     blurRadius: 8,
@@ -78,7 +87,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
               child: SizedBox(
-                height: 72, // 🟣 Здесь можешь менять высоту по вкусу
+                height: 72,
                 child: BottomNavigationBar(
                   currentIndex: _selectedIndex,
                   onTap: (index) {
@@ -89,9 +98,9 @@ class _HomePageState extends State<HomePage> {
                   type: BottomNavigationBarType.fixed,
                   selectedItemColor: Colors.white,
                   unselectedItemColor: Colors.white70,
-                  iconSize: 28,               // Иконки побольше
-                  selectedFontSize: 14,       // Размер текста выбранной вкладки
-                  unselectedFontSize: 13,     // Размер остальных вкладок
+                  iconSize: 28,
+                  selectedFontSize: 14,
+                  unselectedFontSize: 13,
                   items: const [
                     BottomNavigationBarItem(icon: Icon(Icons.auto_awesome), label: "Skills"),
                     BottomNavigationBarItem(icon: Icon(Icons.flash_on), label: "Practice"),
@@ -100,11 +109,8 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-
-
             ),
           ),
-
         );
       },
     );
