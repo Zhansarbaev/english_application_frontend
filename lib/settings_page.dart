@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import 'package:flutter/scheduler.dart';  // для WidgetsBinding
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 
 class SettingsPage extends StatefulWidget {
   final String userId; // Передаём userId через конструктор
@@ -16,6 +19,9 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   Map<String, dynamic>? userStats; // Данные пользователя
   bool isLoading = true; // Флаг загрузки
+  bool _didShowLevelUpDialog = false;      // чтобы диалог показался только один раз
+  final List<String> _levels = ['a1','a2','b1','b2'];
+
 
   @override
   void initState() {
@@ -28,14 +34,13 @@ class _SettingsPageState extends State<SettingsPage> {
     print('🚀 fetchUserStats вызван');
     print('🔍 userId: ${widget.userId}');
 
-    // Если userId пустой, запрос не отправляем
     if (widget.userId.isEmpty) {
       print('❌ userId не установлен или пустой!');
       setState(() => isLoading = false);
       return;
     }
 
-    final url = 'https://4d45-188-124-236-208.ngrok-free.app/statistic/user/${widget.userId}/stats';
+    final url = 'https://03c1-188-124-234-116.ngrok-free.app/statistic/user/${widget.userId}/stats';
     print('🌐 Отправляем GET запрос по URL: $url');
 
     try {
@@ -44,20 +49,29 @@ class _SettingsPageState extends State<SettingsPage> {
       print('📨 Тело ответа: ${response.body}');
 
       if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
         setState(() {
-          userStats = json.decode(response.body);
+          userStats = data;
           isLoading = false;
         });
+
         print('✅ Данные пользователя получены: $userStats');
+
+        // 💡 Вызов проверки уровня после того, как UI обновился
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _checkForLevelUp(); // безопасно, context уже готов
+        });
       } else {
         setState(() => isLoading = false);
-        print('Ошибка при запросе данных пользователя: ${response.statusCode}');
+        print('❌ Ошибка при запросе данных пользователя: ${response.statusCode}');
       }
     } catch (e) {
       setState(() => isLoading = false);
-      print('Ошибка при выполнении запроса: $e');
+      print('❌ Ошибка при выполнении запроса: $e');
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -162,6 +176,56 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ),
     );
+  }
+
+  void _checkForLevelUp() {
+    if (_didShowLevelUpDialog) return;               // уже показали
+    if (userStats == null) return;
+
+    // вычислим прогресс — в примере берём vocabulary
+    final learned    = userStats!['vocabulary']?['learned'] ?? 0;
+    final total      = userStats!['vocabulary']?['total']   ?? 1;
+    final progress   = total > 0 ? learned / total : 0;
+
+    // если 100% и не на последнем уровне
+    final currentLevel = (userStats!['user']?['level'] as String).toLowerCase();
+    final idx = _levels.indexOf(currentLevel);
+    if (progress >= 1.0 && idx != -1 && idx < _levels.length - 1) {
+      final nextLevel = _levels[idx + 1];
+      _didShowLevelUpDialog = true;
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Құттықтаймыз! 🎉'),
+          content: Text(
+              'Сіз ${currentLevel.toUpperCase()} деңгейінде 100% жинадыңыз. '
+                  '${nextLevel.toUpperCase()} деңгейіне көтерілгіңіз келеді ме?'
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Бас тарту'),
+            ),
+            TextButton(
+              onPressed: () async {
+                // обновляем уровень в Supabase
+                await Supabase.instance.client
+                    .from('users_progress')
+                    .update({'level': nextLevel})
+                    .eq('user_id', widget.userId);
+
+                Navigator.of(context).pop();
+                // подгружаем свежие данные (покажем уже новый уровень)
+                _didShowLevelUpDialog = false;
+                fetchUserStats();
+              },
+              child: const Text('Келісу'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
 

@@ -37,7 +37,7 @@ class _AnswerCheckPageState extends State<AnswerCheckPage> {
 
     setState(() => isChecking = true);
 
-    final url = Uri.parse("https://379b-79-140-224-173.ngrok-free.app/listening/check_answer");
+    final url = Uri.parse("https://03c1-188-124-234-116.ngrok-free.app/listening/check_answer");
 
     try {
       final response = await http.post(
@@ -58,8 +58,59 @@ class _AnswerCheckPageState extends State<AnswerCheckPage> {
             .join("\n\n");
 
         setState(() => feedbackMessage = allFeedback);
-        _unlockNextCard();
-      } else {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.2,
+              minChildSize: 0.2,
+              maxChildSize: 0.8,
+              expand: false,
+              builder: (context, scrollController) {
+                return Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                  ),
+                  child: ListView(
+                    controller: scrollController,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text(
+                          "Тексеру нәтижелері",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const Divider(),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        child: Text(
+                          feedbackMessage,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+
+
+        // ✅ Проверяем, есть ли хотя бы один правильный ответ
+        final hasCorrect = decodedResponse["evaluations"]
+            .any((eval) => eval["success"] == true);
+
+        if (hasCorrect) {
+          _unlockNextCard();
+        }
+      }
+
+      else {
         _showSnackBar("Ошибка сервера. Попробуйте позже.", isSuccess: false);
       }
     } catch (e) {
@@ -72,7 +123,7 @@ class _AnswerCheckPageState extends State<AnswerCheckPage> {
   Future<void> _unlockNextCard() async {
     setState(() => isUnlocking = true);
 
-    final url = Uri.parse("https://379b-79-140-224-173.ngrok-free.app/listening/unlock_card");
+    final url = Uri.parse("https://03c1-188-124-234-116.ngrok-free.app/listening/unlock_card");
 
     try {
       final response = await http.post(
@@ -277,44 +328,8 @@ class _AnswerCheckPageState extends State<AnswerCheckPage> {
           ),
         ),
       ),
-      bottomSheet: feedbackMessage.isNotEmpty
-          ? DraggableScrollableSheet(
-        snap: true,
-        snapSizes: const [0.2, 0.8],
-        initialChildSize: 0.2,
-        minChildSize: 0.2,
-        maxChildSize: 0.8,
-        builder: (context, scrollController) {
-          return Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
 
-            ),
-            child: ListView(
-              controller: scrollController,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
-                    "Тексеру нәтижелері",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const Divider(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Text(
-                    feedbackMessage,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      )
-          : null,
+
     );
   }
 }

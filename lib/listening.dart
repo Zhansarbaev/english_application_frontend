@@ -50,12 +50,19 @@ class _ListeningPageState extends State<ListeningPage> {
 
 
   final List<String> podcastTopics = [
-    "Everyday English",    // Повседневный английский
-    "Phrasal Verbs",       // Фразовые глаголы
-    "Idioms",              // Идиомы
-    "Pronunciation",       // Произношение
-    "Vocabulary Boost",    // Увеличение словарного запаса
+    "Everyday English",           // Повседневный английский
+    "English Conversations",      // Диалоги и повседневное общение
+    "Food and Cooking",           // Еда и готовка
+    "Travel English",             // Английский в путешествиях
+    "Health and Fitness",         // Здоровье и тело
+    "English at Work",            // Рабочие ситуации
+    "Talking About Weather",      // Погода
+    "Hobbies and Free Time",      // Досуг и увлечения
+    "Phrasal Verbs in Use",       // Употребление фразовых глаголов
+    "Common English Idioms"       // Часто встречающиеся идиомы
   ];
+
+
 
   final List<String> videoTopics = [
     "Grammar Tips",        // Советы по грамматике
@@ -243,7 +250,7 @@ class _ListeningPageState extends State<ListeningPage> {
     }
 
     final url = Uri.parse(
-        'https://4d45-188-124-236-208.ngrok-free.app/listening/podcasts?user_id=${widget.userId}&topic=$selectedPodcastTopic');
+        'https://03c1-188-124-234-116.ngrok-free.app/listening/podcasts?user_id=${widget.userId}&topic=$selectedPodcastTopic');
 
     try {
       setState(() {
@@ -319,7 +326,7 @@ class _ListeningPageState extends State<ListeningPage> {
       isLoadingVideos = true;
     });
     final url = Uri.parse(
-        'https://4d45-188-124-236-208.ngrok-free.app/listening/videos?user_id=${widget.userId}&topic=$selectedVideoTopic');
+        'https://03c1-188-124-234-116.ngrok-free.app/listening/videos?user_id=${widget.userId}&topic=$selectedVideoTopic');
 
     try {
       final response = await http.get(url);
