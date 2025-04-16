@@ -14,7 +14,7 @@ class ReadingPage extends StatefulWidget {
 }
 
 class _ReadingPageState extends State<ReadingPage> {
-  final String baseUrl = "https://98e9-188-124-236-208.ngrok-free.app/reading";
+  final String baseUrl = "https://4d45-188-124-236-208.ngrok-free.app/reading";
 
   List<String> topics = [];
   String? selectedTopic;
@@ -37,8 +37,14 @@ class _ReadingPageState extends State<ReadingPage> {
       article = prefs.getString("savedArticle") ?? "";
     });
 
+    if (selectedTopic != null) {
+      setState(() {
+        isReadMarked = prefs.getBool("isReadMarked_${selectedTopic!}") ?? false;
+      });
+    }
 
   }
+
 
 
 
@@ -81,7 +87,11 @@ class _ReadingPageState extends State<ReadingPage> {
       final response = await http.post(
         Uri.parse("$baseUrl/generate_article"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"user_id": widget.userId, "topic": selectedTopic}),
+        body: jsonEncode({
+          "user_id": widget.userId,
+          "topic": selectedTopic?.trim(), // 👈 хотя бы убрать пробелы
+        }),
+
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -106,16 +116,48 @@ class _ReadingPageState extends State<ReadingPage> {
       final response = await http.post(
         Uri.parse("$baseUrl/mark_as_read"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"user_id": widget.userId, "topic": selectedTopic}),
+        body: jsonEncode({
+          "user_id": widget.userId,
+          "topic": selectedTopic?.trim(), // 👈 хотя бы убрать пробелы
+        }),
+
       );
       if (response.statusCode == 200) {
         setState(() => isReadMarked = true);
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setBool("isReadMarked_${selectedTopic!}", true); // 👈 сохраняем
         _showTopSnackbar("Оқылған тақырып ретінде белгіленді");
       }
+
     } catch (e) {
       _showSnackbar("Қате: $e");
     }
   }
+
+
+  Future<void> _checkIfTopicRead(String topic) async {
+    try {
+      final response = await http.get(
+        Uri.parse("https://4d45-188-124-236-208.ngrok-free.app/user_topics?user_id=${widget.userId}&topic=${Uri.encodeComponent(topic)}"),
+        headers: {
+          "Accept": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List && data.isNotEmpty) {
+          final topicData = data.first;
+          setState(() {
+            isReadMarked = topicData["read"] == true;
+          });
+        }
+      }
+    } catch (e) {
+      print("Ошибка при проверке прочитанности: $e");
+    }
+  }
+
 
   void _showSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -193,6 +235,8 @@ class _ReadingPageState extends State<ReadingPage> {
     final paragraphs = text.split('\n\n');
 
     return ListView.builder(
+      shrinkWrap: true, // 👈 обязательно!
+      physics: NeverScrollableScrollPhysics(), // 👈 чтобы не конфликтовало со скроллом снаружи
       itemCount: paragraphs.length,
       itemBuilder: (context, index) {
         final para = paragraphs[index];
@@ -229,7 +273,7 @@ class _ReadingPageState extends State<ReadingPage> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF84BEDB), Colors.white],
+            colors: [Color(0xFF7B61FF), Color(0xFFB79BFF)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -254,27 +298,37 @@ class _ReadingPageState extends State<ReadingPage> {
   Widget _buildAppBar() {
     return Container(
       height: 56,
-      color: Color(0xFF84BEDB),
-      child: Row(
+      color: Color(0xFF7B61FF), // тот же фиолетовый как фон
+      child: Stack(
         children: [
-          IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.black87),
-            onPressed: () => Navigator.pop(context),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              icon: Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
           ),
-          SizedBox(width: 8),
-          Text(
-            "Reading бөлімі",
-            style: TextStyle(fontSize: 20, color: Colors.black87, fontWeight: FontWeight.bold),
+          Center(
+            child: Text(
+              "Reading бөлімі",
+              style: TextStyle(
+                fontSize: 20,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
+
   Widget _buildContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // 🔹 Кнопки сверху
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -282,21 +336,28 @@ class _ReadingPageState extends State<ReadingPage> {
               ElevatedButton.icon(
                 onPressed: isLoadingTopics ? null : _fetchTopics,
                 icon: isLoadingTopics
-                    ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                    : Icon(Icons.autorenew),
-                label: Text("Тақырыпты генерациялау"),
+                    ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : Icon(Icons.autorenew, color: Colors.white),
+                label: Text(
+                  "Тақырыпты генерациялау",
+                  style: TextStyle(color: Colors.white),
+                ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: Color(0xFF957DFF),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
+
               SizedBox(width: 10),
               ElevatedButton.icon(
                 onPressed: _goToHistory,
-                icon: Icon(Icons.history),
-                label: Text("Бұрын оқығандарым"),
+                icon: Icon(Icons.history, color: Colors.white,),
+                label: Text(
+                  "Тақырыпты генерациялау",
+                  style: TextStyle(color: Colors.white),
+                ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
+                  backgroundColor: Color(0xFFFFB74D) ,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
@@ -304,6 +365,8 @@ class _ReadingPageState extends State<ReadingPage> {
           ),
         ),
         SizedBox(height: 16),
+
+        // 🔹 Выпадающий список тем
         if (topics.isNotEmpty)
           Card(
             elevation: 3,
@@ -326,6 +389,8 @@ class _ReadingPageState extends State<ReadingPage> {
                         SharedPreferences prefs = await SharedPreferences.getInstance();
                         await prefs.setString("selectedTopic", value!);
                         await prefs.remove("savedArticle");
+                        await prefs.remove("isReadMarked_$value"); // 👈 сюда вставляешь
+
                       },
                       items: topics.map((topic) {
                         return DropdownMenuItem<String>(
@@ -344,10 +409,13 @@ class _ReadingPageState extends State<ReadingPage> {
                     onPressed: (selectedTopic == null || isLoadingArticle) ? null : _fetchArticle,
                     icon: isLoadingArticle
                         ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                        : Icon(Icons.menu_book),
-                    label: Text("Оқу"),
+                        : Icon(Icons.visibility, color: Colors.white,),
+                    label: Text(
+                      "Оқу",
+                      style: TextStyle(color: Colors.white),
+                    ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
+                      backgroundColor: Color(0xFF66BB6A),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
@@ -356,49 +424,46 @@ class _ReadingPageState extends State<ReadingPage> {
             ),
           ),
         SizedBox(height: 16),
+
+        // 🔹 Статья и кнопка "Оқылды"
         if (article.isNotEmpty)
           Expanded(
-            child: Column(
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: 20),
               children: [
-                Expanded(
-                  child: Card(
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "$selectedTopic",
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(height: 8),
-                            buildArticleContent(article),
-
-                          ],
+                Card(
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "$selectedTopic",
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
-                      ),
+                        SizedBox(height: 8),
+                        buildArticleContent(article),
+                      ],
                     ),
                   ),
                 ),
                 SizedBox(height: 12),
                 ElevatedButton.icon(
                   onPressed: isReadMarked ? null : _markAsRead,
-                  icon:
-                    Icon(Icons.check_circle_outline,
+                  icon: Icon(
+                    Icons.check_circle_outline,
                     color: isReadMarked ? Colors.black : Colors.white,
                   ),
                   label: Text(
                     "Оқылды деп белгілеу",
                     style: TextStyle(
-                      color: isReadMarked ? Colors.black : Colors.white, //  Меняется цвет текста
+                      color: isReadMarked ? Colors.black : Colors.white,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isReadMarked ? Colors.grey : Colors.teal,
-                    disabledForegroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     minimumSize: Size(double.infinity, 50),
                   ),
@@ -409,4 +474,5 @@ class _ReadingPageState extends State<ReadingPage> {
       ],
     );
   }
+
 }

@@ -18,15 +18,20 @@ void main() async {
   );
 
   final prefs = await SharedPreferences.getInstance();
+
+  final bool hasSeenIntro = prefs.getBool('hasSeenIntro') ?? false;
   final bool isRemembered = prefs.getBool('isRemembered') ?? false;
   final String? token = prefs.getString('userId');
 
   runApp(MyApp(
-    initialPage: isRemembered && token != null
+    initialPage: !hasSeenIntro
+        ? IntroSlider() // 👈 Покажем заставку если флага нет
+        : (isRemembered && token != null
         ? HomePage(token: token)
-        : LevelSelectionPage(),
+        : LevelSelectionPage()),
   ));
 }
+
 
 
 

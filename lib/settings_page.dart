@@ -1,41 +1,45 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'user_data.dart'; // Импортируем глобальную переменную для userId
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:percent_indicator/percent_indicator.dart';
 
 class SettingsPage extends StatefulWidget {
+  final String userId; // Передаём userId через конструктор
+
+  const SettingsPage({Key? key, required this.userId}) : super(key: key);
+
   @override
   _SettingsPageState createState() => _SettingsPageState();
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  Map<String, dynamic>? userStats;// Данные пользователя
+  Map<String, dynamic>? userStats; // Данные пользователя
   bool isLoading = true; // Флаг загрузки
 
   @override
   void initState() {
     super.initState();
+    print('SettingsPage: Переданный userId: ${widget.userId}');
     fetchUserStats(); // Получаем данные с API при инициализации
   }
 
   Future<void> fetchUserStats() async {
     print('🚀 fetchUserStats вызван');
-    print('🔍 userId: $userId');  // Убедись, что оно не пустое
+    print('🔍 userId: ${widget.userId}');
 
-    if (userId == null || userId.isEmpty) {
+    // Если userId пустой, запрос не отправляем
+    if (widget.userId.isEmpty) {
       print('❌ userId не установлен или пустой!');
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
       return;
     }
 
-    final url = 'https://32ba-188-124-247-168.ngrok-free.app/statistic/user/$userId/stats';
+    final url = 'https://4d45-188-124-236-208.ngrok-free.app/statistic/user/${widget.userId}/stats';
     print('🌐 Отправляем GET запрос по URL: $url');
 
     try {
       final response = await http.get(Uri.parse(url));
-
       print('📦 Статус ответа: ${response.statusCode}');
       print('📨 Тело ответа: ${response.body}');
 
@@ -46,65 +50,143 @@ class _SettingsPageState extends State<SettingsPage> {
         });
         print('✅ Данные пользователя получены: $userStats');
       } else {
-        setState(() {
-          isLoading = false;
-        });
+        setState(() => isLoading = false);
         print('Ошибка при запросе данных пользователя: ${response.statusCode}');
       }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
       print('Ошибка при выполнении запроса: $e');
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.blue[800],
-        title: Text(
-          'User Statistics',
-          style: TextStyle(color: Colors.white),
-        ),
-        centerTitle: true,
-        automaticallyImplyLeading: false, // Убирает кнопку возврата
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: isLoading || userStats == null
-            ? Center(child: CircularProgressIndicator()) // Пока данные загружаются, показываем индикатор загрузки
-            : SingleChildScrollView(  // Оборачиваем все содержимое в прокручиваемый контейнер
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _userInfoPanel(),
-              SizedBox(height: 20),
-              _statCard('Vocabulary', userStats?['vocabulary']?['learned'] ?? 0,
-                  userStats?['vocabulary']?['total'] ?? 0, Icons.book),
-              SizedBox(height: 20),
-              _statCard('Listening', userStats?['listening']?['total_sessions'] ?? 0, 100, Icons.headset),
-              SizedBox(height: 20),
-              _statCard('Reading', userStats?['reading']?['read'] ?? 0, userStats?['reading']?['total_topics'] ?? 0, Icons.library_books),
-            ],
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // ✅ Фиолетовый фон сверху
+          Container(
+            height: 320,
+            decoration: const BoxDecoration(
+              color: Color(0xFF7B61FF),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
+            ),
           ),
-        ),
+
+          // ✅ Основной контент + обновление
+          RefreshIndicator(
+            onRefresh: fetchUserStats, // функция обновления данных
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                children: [
+                  const SizedBox(height: 60),
+
+                  // 🔹 Мотивация + инфо блок
+                  Column(
+                    children: [
+                      const Text(
+                        'Бүгінгі ісің — ертеңгі жеңісің! 💪',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 30),
+                      Align(
+                        alignment: Alignment.center,
+                        child: Container(
+                          width: MediaQuery.of(context).size.width * 0.9,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Column(
+                            children: [
+                              _infoRow("Email", userStats?['user']?['email']),
+                              const SizedBox(height: 6),
+                              _infoRow("Деңгей", userStats?['user']?['level']),
+                              const SizedBox(height: 6),
+                              _infoRow("Ашылған бөлімдер", userStats?['user']?['unlocked_level']?.toString()),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // 🔹 Белая карточка прогресса
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Card(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      elevation: 5,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          children: [
+                            _statCard("📘 Vocabulary",
+                                userStats?['vocabulary']?['learned'] ?? 0,
+                                userStats?['vocabulary']?['total'] ?? 0,
+                                Colors.deepPurple),
+                            const SizedBox(height: 20),
+                            _statCard("🎧 Listening",
+                                userStats?['listening']?['total_sessions'] ?? 0,
+                                100,
+                                Colors.indigo),
+                            const SizedBox(height: 20),
+                            _statCard("📗 Reading",
+                                userStats?['reading']?['read'] ?? 0,
+                                userStats?['reading']?['total_topics'] ?? 0,
+                                Colors.teal),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 40), // немного запаса снизу
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _userInfoPanel() {
-    // Логируем значения перед рендерингом
-    print('User Info: Email: ${userStats?['user']?['email'] ?? 'Не указан'}, Level: ${userStats?['user']?['level'] ?? 'Не указан'}, Unlocked Level: ${userStats?['user']?['unlocked_level'] ?? 'Не указан'}');
 
+
+  Widget _infoRow(String title, String? value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(title, style: const TextStyle(color: Colors.white70)),
+        Text(value ?? '...', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+
+
+
+
+  // Полная информация о пользователе (развёрнутая панель)
+  Widget _userInfoPanel() {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.blue[50],
         borderRadius: BorderRadius.circular(10),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: Colors.black26,
             blurRadius: 4,
@@ -116,88 +198,83 @@ class _SettingsPageState extends State<SettingsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'User ID: $userId', // Используем глобальный userId
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            'User ID: ${widget.userId}',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Text(
-            'Email: ${userStats?['user']?['email'] ?? 'Не указан'}',  // Добавляем обработку null
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            'Email: ${userStats?['user']?['email'] ?? 'Не указан'}',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Text(
-            'Level: ${userStats?['user']?['level'] ?? 'Не указан'}',  // Добавляем обработку null
-            style: TextStyle(fontSize: 16),
+            'Level: ${userStats?['user']?['level'] ?? 'Не указан'}',
+            style: const TextStyle(fontSize: 16),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Text(
-            'Unlocked Level: ${userStats?['user']?['unlocked_level'] ?? 'Не указан'}',  // Добавляем обработку null
-            style: TextStyle(fontSize: 16),
+            'Unlocked Level: ${userStats?['user']?['unlocked_level'] ?? 'Не указан'}',
+            style: const TextStyle(fontSize: 16),
           ),
         ],
       ),
     );
   }
 
-  Widget _statCard(String title, int current, int total, IconData icon) {
-    double progress = current / total;
+  Widget _statCard(String title, int current, int total, Color color) {
+    double progress = total > 0 ? current / total : 0;
 
-    // Логируем прогресс
-    print('Progress for $title: $current / $total');
-
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          CircularPercentIndicator(
+            radius: 55.0,
+            lineWidth: 10.0,
+            percent: progress.clamp(0.0, 1.0),
+            animation: true,
+            animationDuration: 800,
+            center: Text(
+              "${(progress * 100).toStringAsFixed(0)}%",
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            progressColor: color,
+            backgroundColor: Colors.grey.shade300,
+            circularStrokeCap: CircularStrokeCap.round,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(icon, color: Colors.blue[800], size: 30),
-                SizedBox(width: 10),
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue[800],
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
                 ),
+                const SizedBox(height: 4),
+                Text("$current out of $total completed",
+                    style: const TextStyle(color: Colors.black87)),
               ],
             ),
-            SizedBox(height: 10),
-            Text(
-              '$current / $total',
-              style: TextStyle(fontSize: 16),
-            ),
-            SizedBox(height: 10),
-            TweenAnimationBuilder(
-              tween: Tween<double>(begin: 0, end: progress),
-              duration: Duration(seconds: 1),
-              builder: (context, value, child) {
-                return LinearProgressIndicator(
-                  value: value,
-                  backgroundColor: Colors.grey[200],
-                  color: Colors.blue,
-                );
-              },
-            ),
-            SizedBox(height: 10),
-            Text(
-              '${(progress * 100).toStringAsFixed(1)}% completed',
-              style: TextStyle(fontSize: 14, color: Colors.blueGrey),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+
+
 }
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final user = Supabase.instance.client.auth.currentUser;
+
+  final String userId = user?.id ?? '';
+
   runApp(MaterialApp(
-    home: SettingsPage(),
+
+    home: SettingsPage(userId: userId),
   ));
 }

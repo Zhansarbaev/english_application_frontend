@@ -20,28 +20,23 @@ class _FavoritesPageState extends State<FavoritesPage> {
     fetchFavorites();
   }
 
-  /// Загружаем избранные слова пользователя
   Future<void> fetchFavorites() async {
     try {
       final response = await supabase
           .from('favorites')
-          .select('word, translation_kz, level') // <-- Добавили 'level'
+          .select('word, translation_kz, level')
           .eq('user_id', widget.userId);
 
       if (response != null && response.isNotEmpty) {
         setState(() {
           favoriteWords = List<Map<String, dynamic>>.from(response);
         });
-        debugPrint("Загружены избранные слова: $favoriteWords");
-      } else {
-        debugPrint("У пользователя нет избранных слов.");
       }
     } catch (e) {
       debugPrint("Ошибка при загрузке избранных слов: $e");
     }
   }
 
-  /// Удаляем слово из избранного
   Future<void> removeFromFavorites(String word) async {
     try {
       await supabase
@@ -53,61 +48,153 @@ class _FavoritesPageState extends State<FavoritesPage> {
       setState(() {
         favoriteWords.removeWhere((item) => item['word'] == word);
       });
-
-      debugPrint("Слово удалено из избранного: $word");
     } catch (e) {
       debugPrint("Ошибка при удалении слова: $e");
     }
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Таңдаулы сөздер"),
-        backgroundColor: Colors.blue[800],
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context, true); // Возвращаем true, чтобы обновить VocPage
-          },
-        ),
-      ),
-      body: favoriteWords.isEmpty
-          ? Center(
-        child: Text(
-          "Сізде әлі таңдаулы сөздер жоқ.",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
-        ),
-      )
-          : ListView.builder(
-        padding: EdgeInsets.all(16),
-        itemCount: favoriteWords.length,
-        itemBuilder: (context, index) {
-          final word = favoriteWords[index]['word'];
-          final translation = favoriteWords[index]['translation_kz'];
+      backgroundColor: const Color(0xFFFFFFFF),
 
-          return Card(
-            elevation: 3,
-            margin: EdgeInsets.only(bottom: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            child: ListTile(
-              title: Text(
-                word,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                translation,
-                style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-              ),
-              trailing: IconButton(
-                icon: Icon(Icons.delete, color: Colors.red),
-                onPressed: () => removeFromFavorites(word),
+      // ❌ Удаляем appBar (если был)
+
+      // ✅ Добавляем кастомный AppBar + остальное в Column
+      body: Column(
+        children: [
+          // 🔹 Кастомный AppBar
+          Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF7B61FF),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(35),
+                bottomRight: Radius.circular(35),
               ),
             ),
-          );
-        },
+            padding: const EdgeInsets.only(top: 48, left: 16, right: 16, bottom: 20),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.pop(context, true),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      "Таңдаулы сөздер",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 48), // 👈 ширина иконки для баланса
+              ],
+            ),
+          ),
+
+
+          // 🔹 Содержимое страницы
+          Expanded(
+            child: favoriteWords.isEmpty
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/images/assam.png', // путь к твоему изображению
+                    width: 300,
+                    height: 300,
+                  ),
+                  const SizedBox(height: 16),
+
+                ],
+              ),
+            )
+
+                : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: favoriteWords.length,
+              itemBuilder: (context, index) {
+                final word = favoriteWords[index]['word'];
+                final translation = favoriteWords[index]['translation_kz'];
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: Dismissible(
+                    key: Key(word),
+                    direction: DismissDirection.endToStart,
+                    onDismissed: (direction) async {
+                      await Future.delayed(const Duration(milliseconds: 300)); // дождаться анимации
+                      removeFromFavorites(word);
+                    },
+
+                    background: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        color: Colors.redAccent,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF90CAF9), Color(0xFF5C6BC0)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 4,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                word,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                translation,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Icon(Icons.favorite, color: Colors.white),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
+
 }

@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
 class HistoryReadingPage extends StatefulWidget {
@@ -14,7 +13,7 @@ class HistoryReadingPage extends StatefulWidget {
 }
 
 class _HistoryReadingPageState extends State<HistoryReadingPage> {
-  final String baseUrl = "https://682a-2a03-32c0-5001-a883-c8a0-1a09-790a-7e3f.ngrok-free.app/reading";
+  final String baseUrl = "https://4d45-188-124-236-208.ngrok-free.app/reading";
   List<dynamic> history = [];
   bool isLoading = false;
 
@@ -116,45 +115,120 @@ class _HistoryReadingPageState extends State<HistoryReadingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Оқу тарихы"),
-        backgroundColor: Color(0xFF84BEDB),
-      ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : history.isEmpty
-          ? Center(
-        child: Text(
-          "Оқылған мақалалар табылмады.",
-          style: TextStyle(fontSize: 16, color: Colors.grey),
-        ),
-      )
-          : ListView.builder(
-        itemCount: history.length,
-        itemBuilder: (context, index) {
-          final item = history[index];
-          final topic = item["topic"] ?? "Без темы";
-          final createdAt = _formatDate(item["updated_at"]);
-          final content = item["content"] ?? "";
-          final wasRead = item["read"] == true;
-
-          return Card(
-            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            elevation: 4,
-            child: ListTile(
-              leading: Icon(Icons.article, color: Colors.blueAccent),
-              title: Text(
-                topic,
-                style: TextStyle(fontWeight: FontWeight.bold),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+      backgroundColor: const Color(0xFFFFFFFF),
+      body: Column(
+        children: [
+          // 🔹 Кастомный AppBar
+          Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF7B61FF),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(35),
+                bottomRight: Radius.circular(35),
               ),
-              subtitle: Text(createdAt),
-              onTap: () => _showArticleDialog(topic, content, wasRead),
             ),
-          );
-        },
+            padding: const EdgeInsets.only(top: 48, left: 16, right: 16, bottom: 20),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      "Оқу тарихы",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 48),
+              ],
+            ),
+          ),
+
+          // 🔹 Контент
+          Expanded(
+            child: isLoading
+                ? Center(child: CircularProgressIndicator())
+                : history.isEmpty
+                ? Center(
+              child: Text(
+                "Оқылған мақалалар табылмады.",
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            )
+                : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: history.length,
+              itemBuilder: (context, index) {
+                final item = history[index];
+                final topic = item["topic"] ?? "Без темы";
+                final createdAt = _formatDate(item["updated_at"]);
+                final content = item["content"] ?? "";
+                final wasRead = item["read"] == true;
+
+                return GestureDetector(
+                  onTap: () => _showArticleDialog(topic, content, wasRead),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF90CAF9), Color(0xFF5C6BC0)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    child: Row(
+                      children: [
+                        Icon(Icons.menu_book, color: Colors.white),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                topic,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                createdAt,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

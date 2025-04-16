@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class VocPage extends StatefulWidget {
   final String userId;
@@ -20,6 +21,8 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
   bool isSoundOn = true;
   String userLevel = '';
   bool isFavorite = false;
+  late final PageController _pageController = PageController();
+
 
   late AnimationController _animationController;
   late Animation<Offset> _slideAnimation;
@@ -28,6 +31,7 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
     fetchUserLevel();
+    loadSoundPreference();
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -39,6 +43,16 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
       end: const Offset(0, 0),
     ).animate(_animationController);
   }
+
+  Future<void> loadSoundPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getBool('sound_${widget.userId}');
+    setState(() {
+      isSoundOn = saved ?? true;
+    });
+  }
+
+
 
   Future<void> fetchUserLevel() async {
     try {
@@ -149,27 +163,27 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
     }
   }
 
-  void nextWord(bool forward) async {
+  void nextWord(bool forward) {
     if ((forward && currentIndex < words.length - 1) ||
         (!forward && currentIndex > 0)) {
       _slideAnimation = Tween<Offset>(
-        begin: const Offset(0, 0),
-        end: Offset(forward ? -1 : 1, 0),
+        begin: Offset(0, 0),
+        end: Offset(forward ? -1.0 : 1.0, 0),
       ).animate(_animationController);
 
-      await _animationController.forward();
-      _animationController.reset();
-
-      setState(() {
-        currentIndex += forward ? 1 : -1;
+      _animationController.forward().then((_) {
+        setState(() {
+          currentIndex += forward ? 1 : -1;
+        });
+        _animationController.reset();
+        speakWord(words[currentIndex]['word']);
+        checkIfFavorite();
       });
-
-      speakWord(words[currentIndex]['word']);
-      checkIfFavorite();
     } else if (forward && currentIndex == words.length - 1) {
       Navigator.pop(context, true);
     }
   }
+
 
   Future<void> checkAndUnlockLevel() async {
     try {
@@ -211,25 +225,32 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
   Future<void> markLearned() async {
     if (words.isEmpty) return;
 
-    final wordId = words[currentIndex]['id'];  // Получаем id слова (уникальный идентификатор в vocabulary_super)
+    final wordId = words[currentIndex]['id'];
 
     try {
-      // Новый запрос для обновления прогресса пользователя в таблице user_vocabulary_progress
       await supabase.from('user_vocabulary_progress').upsert({
-        'user_id': widget.userId,   // ID пользователя
-        'word_id': wordId,           // ID слова
-        'is_read': true,             // Устанавливаем, что слово выучено
+        'user_id': widget.userId,
+        'word_id': wordId,
+        'is_read': true,
       });
 
-      // Убираем слово из локального списка
+      // 🔹 ЭФФЕКТ ПЕРЕХОДА ВЛЕВО (как "вперёд")
+      _slideAnimation = Tween<Offset>(
+        begin: Offset(0, 0),
+        end: Offset(-1.0, 0), // влево
+      ).animate(_animationController);
+
+      await _animationController.forward();
+      _animationController.reset();
+
       setState(() {
         words.removeAt(currentIndex);
         if (currentIndex >= words.length) {
           currentIndex = words.isEmpty ? 0 : words.length - 1;
         }
       });
-      await checkAndUnlockLevel();
 
+      await checkAndUnlockLevel();
 
       if (words.isNotEmpty) {
         speakWord(words[currentIndex]['word']);
@@ -243,115 +264,175 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
   }
 
 
+
+
   @override
   Widget build(BuildContext context) {
     if (words.isEmpty) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Vocabulary'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
+
+
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Vocabulary'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(isSoundOn ? Icons.volume_up : Icons.volume_off),
-            onPressed: () {
-              setState(() {
-                isSoundOn = !isSoundOn;
-              });
-            },
-          ),
-        ],
-      ),
+      backgroundColor: Color(0xFFF5F6FA),
+
       body: Column(
         children: [
-          const Spacer(),
-          GestureDetector(
-            onTap: () => speakWord(words[currentIndex]['word']),
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: Card(
-                margin: const EdgeInsets.all(16),
-                elevation: 6,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Stack(
-                  children: [
-                    Container(
-                      width: 350,
-                      height: 260,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 50,
-                        horizontal: 24,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Слово
-                          Text(
-                            words[currentIndex]['word'],
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 15),
-                          // Транскрипция
-                          Text(
-                            words[currentIndex]['transcription'] ?? '',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              color: Colors.black,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 15),
-                          // Перевод
-                          Text(
-                            words[currentIndex]['translation_kz'],
-                            style: TextStyle(
-                              fontSize: 24,
-                              color: Colors.black,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: IconButton(
-                        icon: Icon(
-                          isFavorite ? Icons.favorite : Icons.favorite_border,
-                          color: isFavorite ? Colors.red : Colors.grey,
-                          size: 28,
-                        ),
-                        onPressed: toggleFavorite,
-                      ),
+          Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF7B61FF),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(35),
+                bottomRight: Radius.circular(35),
+              ),
 
+            ),
+            padding: const EdgeInsets.only(top: 48, left: 16, right: 16, bottom: 20),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    "Vocabulary",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
-                  ],
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    isSoundOn ? Icons.volume_up : Icons.volume_off,
+                    color: Colors.white,
+                  ),
+                  onPressed: () async {
+                    setState(() {
+                      isSoundOn = !isSoundOn;
+                    });
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('sound_${widget.userId}', isSoundOn);
+                  },
+                ),
+              ],
+            ),
+          ),
+
+
+
+          Expanded(
+            child: Center( // ⬅️ оборачиваем PageView в Center
+              child: SizedBox(
+                height: 450, // ⬅️ желаемая высота карточки + PageView
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: words.length,
+                  onPageChanged: (index) {
+                    setState(() {
+                      currentIndex = index;
+                    });
+                    speakWord(words[index]['word']);
+                    checkIfFavorite();
+                  },
+                  itemBuilder: (context, index) {
+                    final word = words[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                      child: GestureDetector(
+                        onTap: () => speakWord(word['word']),
+                        child: Card(
+                          elevation: 8,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF9575CD), Color(0xFF7B61FF)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.white, width: 2),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 10,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                            child: Stack(
+                              children: [
+                                SizedBox.expand(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        word['word'],
+                                        style: const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 15),
+                                      Text(
+                                        word['transcription'] ?? '',
+                                        style: const TextStyle(
+                                          fontSize: 20,
+                                          color: Colors.white,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 15),
+                                      Text(
+                                        word['translation_kz'],
+                                        style: const TextStyle(
+                                          fontSize: 24,
+                                          color: Colors.white,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: IconButton(
+                                    icon: Icon(
+                                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                                      color: isFavorite ? Colors.red : Colors.white,
+                                      size: 28,
+                                    ),
+                                    onPressed: toggleFavorite,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
           ),
-          const Spacer(),
+
+
+          //const Spacer(),
           // --- Старая кнопка "Жаттадым" (не удаляем, только комментируем) ---
           // ElevatedButton(
           //   onPressed: markLearned,
@@ -373,12 +454,20 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
             children: [
               // Кнопка Артқа -> иконка стрелка влево
               ElevatedButton(
-                onPressed: () => nextWord(false),
+                onPressed: () {
+                  if (currentIndex > 0) {
+                    _pageController.previousPage(duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+                  }
+                },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[800],
+                  backgroundColor: Color(0xFF7B61FF),
                   minimumSize: const Size(30, 60),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
+                    side: BorderSide( // 👈 добавляем белую обводку
+                      color: Colors.white,
+                      width: 2,
+                    ),
                   ),
                 ),
                 child: const Icon(
@@ -392,10 +481,14 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
               ElevatedButton(
                 onPressed: markLearned,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[800],
+                  backgroundColor: Color(0xFF7B61FF),
                   minimumSize: const Size(120, 60),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
+                    side: BorderSide( // 👈 добавляем белую обводку
+                      color: Colors.white,
+                      width: 2,
+                    ),
                   ),
                 ),
                 child: const Text(
@@ -410,12 +503,22 @@ class _VocPageState extends State<VocPage> with SingleTickerProviderStateMixin {
 
               // Кнопка Келесі -> иконка стрелка вправо (или галочка, если последний)
               ElevatedButton(
-                onPressed: () => nextWord(true),
+                onPressed: () {
+                  if (currentIndex < words.length - 1) {
+                    _pageController.nextPage(duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+                  } else {
+                    Navigator.pop(context, true);
+                  }
+                },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[800],
+                  backgroundColor: Color(0xFF7B61FF),
                   minimumSize: const Size(30, 60),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
+                    side: BorderSide( // 👈 добавляем белую обводку
+                      color: Colors.white,
+                      width: 2,
+                    ),
                   ),
                 ),
                 child: currentIndex < words.length - 1

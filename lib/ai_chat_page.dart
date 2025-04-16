@@ -29,6 +29,7 @@ class _AIChatPageState extends State<AIChatPage> {
   List<Map<String, String>> _messages = [];
 
   @override
+  @override
   void initState() {
     super.initState();
 
@@ -38,7 +39,11 @@ class _AIChatPageState extends State<AIChatPage> {
     } else {
       if (widget.isNewChat) {
         if (widget.topic != null && widget.topic!.isNotEmpty) {
-          _sendInitialTopic(widget.topic!);
+          if (widget.topic == "Analyze My Data") {
+            _startConversation(); // ✅ Отдельно обрабатываем этот случай
+          } else {
+            _sendInitialTopic(widget.topic!);
+          }
         } else {
           _startConversation();
         }
@@ -48,12 +53,13 @@ class _AIChatPageState extends State<AIChatPage> {
     }
   }
 
+
   Future<void> _sendInitialTopic(String topic) async {
     _addUserMessage(topic);
 
     try {
       final response = await http.post(
-        Uri.parse("https://98e9-188-124-236-208.ngrok-free.app/practice/chat"),
+        Uri.parse("https://4d45-188-124-236-208.ngrok-free.app/practice/chat"),
         headers: {"Content-Type": "application/json"},
         body: json.encode({
           "user_id": widget.userId,
@@ -75,8 +81,13 @@ class _AIChatPageState extends State<AIChatPage> {
 
   Future<void> _startConversation() async {
     try {
+      // 🔹 Показываем тему в чате как сообщение от пользователя (если есть)
+      if (widget.topic != null && widget.topic!.isNotEmpty) {
+        _addUserMessage(widget.topic!);
+      }
+
       final response = await http.post(
-        Uri.parse("https://98e9-188-124-236-208.ngrok-free.app/practice/start"),
+        Uri.parse("https://4d45-188-124-236-208.ngrok-free.app/practice/start"),
         headers: {"Content-Type": "application/json"},
         body: json.encode({
           "user_id": widget.userId,
@@ -96,10 +107,11 @@ class _AIChatPageState extends State<AIChatPage> {
     }
   }
 
+
   Future<void> _loadChatHistory() async {
     try {
       final uri = Uri.parse(
-        "https://98e9-188-124-236-208.ngrok-free.app/practice/chat/history?user_id=${widget.userId}",
+        "https://4d45-188-124-236-208.ngrok-free.app/practice/chat/history?user_id=${widget.userId}",
       );
       final response = await http.get(uri);
 
@@ -133,7 +145,7 @@ class _AIChatPageState extends State<AIChatPage> {
 
     try {
       final response = await http.post(
-        Uri.parse("https://98e9-188-124-236-208.ngrok-free.app/practice/chat"),
+        Uri.parse("https://4d45-188-124-236-208.ngrok-free.app/practice/chat"),
         headers: {"Content-Type": "application/json"},
         body: json.encode({
           "user_id": widget.userId,
@@ -157,6 +169,7 @@ class _AIChatPageState extends State<AIChatPage> {
     setState(() {
       _messages.add({"role": "user", "text": text});
     });
+    _scrollToBottom();
   }
 
   void _addAIMessage(String text) {
@@ -168,11 +181,13 @@ class _AIChatPageState extends State<AIChatPage> {
 
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 300), () {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
     });
   }
 
@@ -183,10 +198,7 @@ class _AIChatPageState extends State<AIChatPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // ---------- Шапка (Header) со стрелкой "Назад" и аватаркой ----------
             _buildChatHeader(),
-
-            // ---------- Основная белая часть чата ----------
             Expanded(
               child: Container(
                 decoration: const BoxDecoration(
@@ -198,12 +210,13 @@ class _AIChatPageState extends State<AIChatPage> {
                 ),
                 child: Column(
                   children: [
-                    // ---- Список сообщений ----
                     Expanded(
                       child: ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         itemCount: _messages.length,
+                        physics: const CustomScrollPhysics(),
+                        cacheExtent: 1000,
                         itemBuilder: (context, index) {
                           final message = _messages[index];
                           final isUser = message['role'] == 'user';
@@ -214,8 +227,6 @@ class _AIChatPageState extends State<AIChatPage> {
                         },
                       ),
                     ),
-
-                    // ---- Поле ввода (стилизованное) ----
                     _buildInputArea(),
                   ],
                 ),
@@ -227,28 +238,23 @@ class _AIChatPageState extends State<AIChatPage> {
     );
   }
 
-  /// Шапка с кнопкой "Назад", аватаркой, именем "ED-Teacher" и значком online (вверху справа)
   Widget _buildChatHeader() {
     return Container(
       color: const Color(0xFF7B61FF),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          // Кнопка "Назад"
           IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.of(context).pop(),
           ),
           const SizedBox(width: 8),
-
-          // Аватарка бота с индикатором "online" вверху
           Stack(
             children: [
               const CircleAvatar(
                 radius: 24,
                 backgroundImage: AssetImage('assets/images/avatarka.jpeg'),
               ),
-              // Перенесли индикатор в правый верхний угол
               Positioned(
                 right: 0,
                 top: 0,
@@ -256,7 +262,7 @@ class _AIChatPageState extends State<AIChatPage> {
                   width: 12,
                   height: 12,
                   decoration: BoxDecoration(
-                    color: Colors.green, // онлайн
+                    color: Colors.green,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 2),
                   ),
@@ -265,8 +271,6 @@ class _AIChatPageState extends State<AIChatPage> {
             ],
           ),
           const SizedBox(width: 12),
-
-          // Имя бота и статус
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -293,47 +297,42 @@ class _AIChatPageState extends State<AIChatPage> {
     );
   }
 
-  /// "Пузырь" сообщений с округлёнными краями
-  /// Бот — слегка светло-сиреневый, пользователь — фиолетовый
   Widget _buildMessageBubble(String text, bool isUser) {
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: const EdgeInsets.all(12),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        decoration: BoxDecoration(
-          // Светлее для бота, оставляем фиолетовый для пользователя
-          color: isUser
-              ? const Color(0xFF7B61FF)
-              : const Color(0xFFE1D4FA), // <-- слегка светлее
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: isUser ? Colors.white : Colors.black87,
+    return RepaintBoundary(
+      child: Align(
+        alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.all(12),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          decoration: BoxDecoration(
+            color: isUser ? const Color(0xFF7B61FF) : const Color(0xFFE1D4FA),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Text(
+            text,
+            style: TextStyle(
+              color: isUser ? Colors.white : Colors.black87,
+            ),
           ),
         ),
       ),
     );
   }
 
-  /// Нижнее поле ввода
   Widget _buildInputArea() {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          // "Пилюльковое" поле ввода
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF3F3F3), // цвет заливки
+                color: const Color(0xFFF3F3F3),
                 borderRadius: BorderRadius.circular(30),
               ),
               child: TextField(
@@ -347,8 +346,6 @@ class _AIChatPageState extends State<AIChatPage> {
             ),
           ),
           const SizedBox(width: 8),
-
-          // Круглая кнопка отправки
           Container(
             decoration: const BoxDecoration(
               color: Color(0xFF7B61FF),
@@ -369,5 +366,23 @@ class _AIChatPageState extends State<AIChatPage> {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+}
+
+// Кастомная физика скролла для ограничения скорости и повышения плавности
+class CustomScrollPhysics extends ClampingScrollPhysics {
+  const CustomScrollPhysics({ScrollPhysics? parent}) : super(parent: parent);
+
+  @override
+  CustomScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return CustomScrollPhysics(parent: buildParent(ancestor));
+  }
+
+  @override
+  Simulation? createBallisticSimulation(ScrollMetrics position, double velocity) {
+    // Ограничиваем максимальную скорость скролла
+    double maxVelocity = 1500.0;
+    double clampedVelocity = velocity.clamp(-maxVelocity, maxVelocity);
+    return super.createBallisticSimulation(position, clampedVelocity);
   }
 }

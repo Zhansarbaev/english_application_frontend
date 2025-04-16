@@ -13,8 +13,10 @@ class ChatStartPage extends StatelessWidget {
     'Tenses',
     'Speaking',
     'Fun Quiz',
-    'Vocabulary Review'
+    'Vocabulary Review',
+    'Analyze My Data', // 👈 новый топик
   ];
+
 
   @override
   Widget build(BuildContext context) {
@@ -198,7 +200,7 @@ class ChatStartPage extends StatelessWidget {
                           child: ElevatedButton.icon(
                             onPressed: () async {
                               final response = await http.get(
-                                Uri.parse("https://98e9-188-124-236-208.ngrok-free.app/practice/chat/history?user_id=$userId"),
+                                Uri.parse("https://4d45-188-124-236-208.ngrok-free.app/practice/chat/history?user_id=$userId"),
                               );
                               if (response.statusCode == 200) {
                                 final data = json.decode(utf8.decode(response.bodyBytes));

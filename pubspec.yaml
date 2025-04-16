@@ -39,6 +39,8 @@ dependencies:
   flutter_dotenv: ^5.2.1
   intl: ^0.20.2
   html_unescape: ^2.0.0
+  url_launcher: ^6.3.1
+  percent_indicator: ^4.2.5
 
 
 
@@ -74,11 +76,11 @@ flutter:
 
 flutter_icons:
   android: true
-  image_path: "assets/icon/qazaq.png"
+  image_path: "assets/icon/alaida.png"
 
 flutter_native_splash:
   color: "#2286d1"  # Цвет фона
-  image: assets/icon/qazaq.png  # Иконка на Splash Screen
+  image: assets/icon/alaida.png  # Иконка на Splash Screen
   android: true
   fullscreen: true
 
