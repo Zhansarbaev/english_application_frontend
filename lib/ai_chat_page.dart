@@ -59,7 +59,7 @@ class _AIChatPageState extends State<AIChatPage> {
 
     try {
       final response = await http.post(
-        Uri.parse("https://03c1-188-124-234-116.ngrok-free.app/practice/chat"),
+        Uri.parse("http://13.60.11.238:8000/practice/chat"),
         headers: {"Content-Type": "application/json"},
         body: json.encode({
           "user_id": widget.userId,
@@ -87,7 +87,7 @@ class _AIChatPageState extends State<AIChatPage> {
       }
 
       final response = await http.post(
-        Uri.parse("https://03c1-188-124-234-116.ngrok-free.app/practice/start"),
+        Uri.parse("http://13.60.11.238:8000/practice/start"),
         headers: {"Content-Type": "application/json"},
         body: json.encode({
           "user_id": widget.userId,
@@ -111,7 +111,7 @@ class _AIChatPageState extends State<AIChatPage> {
   Future<void> _loadChatHistory() async {
     try {
       final uri = Uri.parse(
-        "https://03c1-188-124-234-116.ngrok-free.app/practice/chat/history?user_id=${widget.userId}",
+        "http://13.60.11.238:8000/practice/chat/history?user_id=${widget.userId}",
       );
       final response = await http.get(uri);
 
@@ -145,7 +145,7 @@ class _AIChatPageState extends State<AIChatPage> {
 
     try {
       final response = await http.post(
-        Uri.parse("https://03c1-188-124-234-116.ngrok-free.app/practice/chat"),
+        Uri.parse("http://13.60.11.238:8000/practice/chat"),
         headers: {"Content-Type": "application/json"},
         body: json.encode({
           "user_id": widget.userId,

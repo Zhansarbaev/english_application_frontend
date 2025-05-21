@@ -37,7 +37,7 @@ class _AnswerCheckPageState extends State<AnswerCheckPage> {
 
     setState(() => isChecking = true);
 
-    final url = Uri.parse("https://03c1-188-124-234-116.ngrok-free.app/listening/check_answer");
+    final url = Uri.parse("http://13.60.11.238:8000/listening/check_answer");
 
     try {
       final response = await http.post(
@@ -123,7 +123,7 @@ class _AnswerCheckPageState extends State<AnswerCheckPage> {
   Future<void> _unlockNextCard() async {
     setState(() => isUnlocking = true);
 
-    final url = Uri.parse("https://03c1-188-124-234-116.ngrok-free.app/listening/unlock_card");
+    final url = Uri.parse("http://13.60.11.238:8000/listening/unlock_card");
 
     try {
       final response = await http.post(

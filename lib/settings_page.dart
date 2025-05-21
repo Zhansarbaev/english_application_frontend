@@ -40,7 +40,7 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
-    final url = 'https://03c1-188-124-234-116.ngrok-free.app/statistic/user/${widget.userId}/stats';
+    final url = 'http://13.60.11.238:8000/statistic/user/${widget.userId}/stats';
     print('🌐 Отправляем GET запрос по URL: $url');
 
     try {

@@ -14,7 +14,7 @@ class ReadingPage extends StatefulWidget {
 }
 
 class _ReadingPageState extends State<ReadingPage> {
-  final String baseUrl = "https://4d45-188-124-236-208.ngrok-free.app/reading";
+  final String baseUrl = "http://13.60.11.238:8000/reading";
 
   List<String> topics = [];
   String? selectedTopic;
@@ -138,7 +138,7 @@ class _ReadingPageState extends State<ReadingPage> {
   Future<void> _checkIfTopicRead(String topic) async {
     try {
       final response = await http.get(
-        Uri.parse("https://4d45-188-124-236-208.ngrok-free.app/user_topics?user_id=${widget.userId}&topic=${Uri.encodeComponent(topic)}"),
+        Uri.parse("http://13.60.11.238:8000/user_topics?user_id=${widget.userId}&topic=${Uri.encodeComponent(topic)}"),
         headers: {
           "Accept": "application/json",
         },
@@ -353,7 +353,7 @@ class _ReadingPageState extends State<ReadingPage> {
                 onPressed: _goToHistory,
                 icon: Icon(Icons.history, color: Colors.white,),
                 label: Text(
-                  "Тақырыпты генерациялау",
+                  "Оқу тарихы",
                   style: TextStyle(color: Colors.white),
                 ),
                 style: ElevatedButton.styleFrom(

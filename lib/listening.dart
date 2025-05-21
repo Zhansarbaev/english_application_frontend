@@ -250,7 +250,7 @@ class _ListeningPageState extends State<ListeningPage> {
     }
 
     final url = Uri.parse(
-        'https://03c1-188-124-234-116.ngrok-free.app/listening/podcasts?user_id=${widget.userId}&topic=$selectedPodcastTopic');
+        'http://13.60.11.238:8000/listening/podcasts?user_id=${widget.userId}&topic=$selectedPodcastTopic');
 
     try {
       setState(() {
@@ -326,7 +326,7 @@ class _ListeningPageState extends State<ListeningPage> {
       isLoadingVideos = true;
     });
     final url = Uri.parse(
-        'https://03c1-188-124-234-116.ngrok-free.app/listening/videos?user_id=${widget.userId}&topic=$selectedVideoTopic');
+        'http://13.60.11.238:8000/listening/videos?user_id=${widget.userId}&topic=$selectedVideoTopic');
 
     try {
       final response = await http.get(url);

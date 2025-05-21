@@ -200,7 +200,7 @@ class ChatStartPage extends StatelessWidget {
                           child: ElevatedButton.icon(
                             onPressed: () async {
                               final response = await http.get(
-                                Uri.parse("https://03c1-188-124-234-116.ngrok-free.app/practice/chat/history?user_id=$userId"),
+                                Uri.parse("http://13.60.11.238:8000/practice/chat/history?user_id=$userId"),
                               );
                               if (response.statusCode == 200) {
                                 final data = json.decode(utf8.decode(response.bodyBytes));
