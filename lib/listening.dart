@@ -56,10 +56,7 @@ class _ListeningPageState extends State<ListeningPage> {
     "Travel English",             // Английский в путешествиях
     "Health and Fitness",         // Здоровье и тело
     "English at Work",            // Рабочие ситуации
-    "Talking About Weather",      // Погода
-    "Hobbies and Free Time",      // Досуг и увлечения
-    "Phrasal Verbs in Use",       // Употребление фразовых глаголов
-    "Common English Idioms"       // Часто встречающиеся идиомы
+    "Talking About Weather"      // Погода
   ];
 
 
@@ -509,7 +506,7 @@ class _ListeningPageState extends State<ListeningPage> {
             onChanged: (String? newValue) async {
               if (isLocked) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Сіз тақырыпты $timeLeft күннен кейін ғана айырбастай аласыз ...")),
+                  SnackBar(content: Text("Сіз тақырыпты $timeLeft күннен кейін ғана айырбастай аласыз...")),
                 );
                 return;
               }

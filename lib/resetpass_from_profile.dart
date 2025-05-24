@@ -41,7 +41,7 @@ class _ResetPassFromProfilePageState extends State<ResetPassFromProfilePage> {
     });
 
     try {
-      final url = Uri.parse("http://10.0.2.2:8000/password/forgot/");
+      final url = Uri.parse("http://13.60.11.238:8000/password/forgot/");
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},

@@ -72,15 +72,16 @@ flutter:
   assets:
     - assets/images/
     - .env
+    - assets/icon/logo1.png
 
 
 flutter_icons:
   android: true
-  image_path: "assets/icon/alaida.png"
+  image_path: "assets/icon/logo1.png"
 
 flutter_native_splash:
   color: "#2286d1"  # Цвет фона
-  image: assets/icon/alaida.png  # Иконка на Splash Screen
+  image: assets/icon/logo1.png  # Иконка на Splash Screen
   android: true
   fullscreen: true
 

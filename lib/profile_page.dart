@@ -71,16 +71,16 @@ class _ProfilePageState extends State<ProfilePage> {
             username = newName;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Имя успешно изменено!')),
+            SnackBar(content: Text('Есіміңіз сәтті ауысты!')),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Ошибка при изменении имени')),
+            SnackBar(content: Text('Есіміңізді ауыстыру кезінде қателік орын алды, қайта көріңіз...')),
           );
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка при изменении имени: $e')),
+          SnackBar(content: Text('Қосымша есіміңізді еңгізе алмайды, қолдауға хабарлаңыз :(')),
         );
       }
     }
